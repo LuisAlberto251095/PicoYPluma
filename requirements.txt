@@ -1,2 +1,6 @@
 Flask
 gunicorn
+Flask-SQLAlchemy
+psycopg2-binary # Para conectar con PostgreSQL
+python-dotenv # Para manejar variables de entorno (útil localmente)
+Werkzeug # Para hashear contraseñas
