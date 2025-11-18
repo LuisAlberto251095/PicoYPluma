@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,23 +16,26 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave_secreta_por_defec
 
 db = SQLAlchemy(app)
 
-# --- MODELO DE BASE DE DATOS: Usuario (EL NUEVO, SIN CELULAR) ---
+# --- MODELO DE BASE DE DATOS ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombres = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
     cedula = db.Column(db.String(10), unique=True, nullable=False)
-    # Sin celular, pais, ni provincia
     institucion_deportiva = db.Column(db.String(100), nullable=False)
     canton = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False) # Aumentamos espacio para seguridad
     recuperacion_email = db.Column(db.String(120), nullable=True)
     role = db.Column(db.String(20), nullable=False, default='Invitado')
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+# --- CREAR TABLAS ---
+with app.app_context():
+    db.create_all()
 
 # --- RUTAS ---
 
@@ -40,25 +43,37 @@ class User(db.Model):
 def home():
     return render_template('login.html')
 
-# --- ¡TRUCO DE MAGIA! ESTA RUTA REPARA TU BASE DE DATOS ---
+# --- RUTA DE REPARACIÓN (ÚSALA SIEMPRE QUE CAMBIES ALGO EN LA BD) ---
 @app.route('/reparar-base-de-datos')
 def reparar_db():
     try:
-        db.drop_all()   # 1. Borra todo lo viejo (con error)
-        db.create_all() # 2. Crea todo lo nuevo (limpio)
-        return "<h1>¡LISTO! Base de datos formateada y arreglada. Ya puedes registrar usuarios.</h1>"
+        db.drop_all()
+        db.create_all()
+        return "<h1>¡Base de datos limpiada y reparada! Ahora ve a registrar el administrador de nuevo.</h1>"
     except Exception as e:
-        return f"<h1>Hubo un error: {str(e)}</h1>"
+        return f"<h1>Error: {str(e)}</h1>"
+
+# --- NUEVA RUTA: MENÚ PRINCIPAL ---
+@app.route('/menu-principal')
+def menu_principal():
+    # Verificamos si hay un usuario en la sesión
+    if 'user_name' in session:
+        return render_template('menu_principal.html', nombre_usuario=session['user_name'])
+    else:
+        flash('Por favor inicia sesión primero.', 'danger')
+        return redirect(url_for('home'))
 
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
+    
     user = User.query.filter_by(username=username).first()
     
     if user and check_password_hash(user.password_hash, password):
-        flash(f'¡Bienvenido {user.nombres}!', 'success')
-        return redirect(url_for('home')) 
+        # Guardamos el usuario en la "memoria" (sesión) para que no se salga
+        session['user_name'] = user.nombres + " " + user.apellidos
+        return redirect(url_for('menu_principal')) # <--- AQUÍ ESTÁ EL CAMBIO CLAVE
     else:
         flash('Usuario o contraseña incorrectos.', 'danger')
         return redirect(url_for('home'))
@@ -108,7 +123,7 @@ def register_admin():
         try:
             db.session.add(new_admin)
             db.session.commit()
-            flash('Administrador registrado exitosamente en la Base de Datos.', 'success')
+            flash('Administrador registrado con éxito. ¡Ahora inicia sesión!', 'success')
             return redirect(url_for('home'))
         except Exception as e:
             db.session.rollback()
