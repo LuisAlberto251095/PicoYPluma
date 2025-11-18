@@ -8,7 +8,7 @@
 
 /* Fondo general azul */
 body {
-    background-color: #34AADC; /* Azul similar al de la imagen */
+    background-color: #34AADC;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,15 +16,15 @@ body {
     color: white;
 }
 
+/* --- ESTILOS PANTALLA LOGIN --- */
 .main-container {
     display: flex;
     width: 100%;
     max-width: 1200px;
-    flex-wrap: wrap; /* Para que se adapte a celulares */
+    flex-wrap: wrap;
 }
 
-/* --- Sección Izquierda (Escudo) --- */
-.left-section {
+.left-section, .right-section {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -34,44 +34,12 @@ body {
     text-align: center;
 }
 
-.escudo-img {
-    width: 180px; /* Ajusta el tamaño del escudo aquí */
-    margin-bottom: 20px;
-}
+.escudo-img { width: 180px; margin-bottom: 20px; }
+.slogan { font-size: 2rem; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
+.deporte-img { width: 100px; margin-bottom: 15px; }
 
-.slogan {
-    font-size: 2rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-
-/* --- Sección Derecha (Formulario) --- */
-.right-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    text-align: center;
-}
-
-.deporte-img {
-    width: 100px; /* Tamaño del niño deportista */
-    margin-bottom: 15px;
-}
-
-.right-section h1 {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    font-weight: normal;
-}
+.right-section h1 { font-size: 2rem; margin-bottom: 10px; }
+.subtitle { font-size: 1.2rem; margin-bottom: 30px; font-weight: normal; }
 
 /* Inputs */
 .input-group {
@@ -82,44 +50,22 @@ body {
     margin-bottom: 15px;
     padding: 5px;
     width: 100%;
-    max-width: 400px; /* Ancho máximo de los inputs */
-    position: relative;
+    max-width: 400px;
 }
 
-.icon-box {
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-}
-
-.icon-box img {
-    width: 20px;
-    opacity: 0.6;
-}
+.icon-box { padding: 0 10px; display: flex; align-items: center; }
+.icon-box img { width: 20px; opacity: 0.6; }
 
 .input-group input {
-    border: none;
-    outline: none;
-    padding: 10px;
-    flex: 1;
-    font-size: 1rem;
-    color: #333;
+    border: none; outline: none; padding: 10px; flex: 1; font-size: 1rem; color: #333;
 }
 
-.eye-icon {
-    padding-right: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
+.eye-icon { padding-right: 10px; cursor: pointer; display: flex; align-items: center; }
+.eye-icon img { width: 18px; opacity: 0.5; }
 
-.eye-icon img {
-    width: 18px;
-    opacity: 0.5;
-}
-
-/* Botones */
+/* Botones Login */
 .btn {
+    display: block;
     width: 100%;
     max-width: 400px;
     padding: 12px;
@@ -129,41 +75,61 @@ body {
     font-weight: bold;
     cursor: pointer;
     margin-bottom: 10px;
-    color: #333; /* Texto oscuro para legibilidad */
+    text-decoration: none; /* Para el enlace <a> */
+    text-align: center;
     transition: transform 0.1s;
 }
+.btn:active { transform: scale(0.98); }
 
-.btn:active {
-    transform: scale(0.98);
+.btn-orange { background-color: #F39C12; color: black; }
+.btn-yellow { background-color: #F1C40F; color: black; }
+.btn-green { background-color: #27AE60; color: white; }
+
+/* --- ESTILOS PANTALLA TIPO DE CUENTA (NUEVO) --- */
+
+.account-container {
+    background-color: #34AADC; /* Mismo fondo */
+    border: 2px solid white; /* Marco blanco opcional según estilo */
+    border-radius: 15px;
+    padding: 40px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-/* Colores específicos de los botones según tu imagen */
-.btn-orange {
-    background-color: #F39C12; /* Naranja */
-    color: black;
-}
-
-.btn-yellow {
-    background-color: #F1C40F; /* Amarillo */
-    color: black;
-}
-
-.btn-green {
-    background-color: #27AE60; /* Verde */
+.account-title {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
     color: white;
+    text-transform: uppercase;
 }
 
-/* Diseño responsivo (Celulares) */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.btn-big {
+    width: 100%;
+    padding: 15px;
+    background-color: #1F3A93; /* Azul oscuro */
+    color: #F1C40F; /* Texto amarillo */
+    border: 2px solid #F1C40F; /* Borde amarillo */
+    border-radius: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-big:hover {
+    background-color: #152a6d;
+}
+
+/* Responsivo */
 @media (max-width: 768px) {
-    .main-container {
-        flex-direction: column;
-    }
-    
-    .slogan {
-        font-size: 1.5rem;
-    }
-    
-    .left-section {
-        margin-bottom: 30px;
-    }
+    .main-container { flex-direction: column; }
+    .slogan { font-size: 1.5rem; }
 }
