@@ -16,15 +16,13 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave_secreta_por_defec
 
 db = SQLAlchemy(app)
 
-# --- MODELO DE BASE DE DATOS: Usuario ---
+# --- MODELO DE BASE DE DATOS: Usuario (EL NUEVO, SIN CELULAR) ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombres = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
     cedula = db.Column(db.String(10), unique=True, nullable=False)
-    # CELULAR ELIMINADO del formulario, pero podría seguir en DB si se quisiera guardar
-    # pais = db.Column(db.String(50), nullable=False, default='Ecuador')
-    # provincia = db.Column(db.String(50), nullable=False, default='Cotopaxi')
+    # Sin celular, pais, ni provincia
     institucion_deportiva = db.Column(db.String(100), nullable=False)
     canton = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -36,21 +34,26 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-# --- CREAR TABLAS AUTOMÁTICAMENTE ---
-with app.app_context():
-    db.create_all()
-
 # --- RUTAS ---
 
 @app.route('/')
 def home():
     return render_template('login.html')
 
+# --- ¡TRUCO DE MAGIA! ESTA RUTA REPARA TU BASE DE DATOS ---
+@app.route('/reparar-base-de-datos')
+def reparar_db():
+    try:
+        db.drop_all()   # 1. Borra todo lo viejo (con error)
+        db.create_all() # 2. Crea todo lo nuevo (limpio)
+        return "<h1>¡LISTO! Base de datos formateada y arreglada. Ya puedes registrar usuarios.</h1>"
+    except Exception as e:
+        return f"<h1>Hubo un error: {str(e)}</h1>"
+
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
-    
     user = User.query.filter_by(username=username).first()
     
     if user and check_password_hash(user.password_hash, password):
@@ -70,7 +73,6 @@ def register_admin():
     
     if request.method == 'POST':
         existing_admin = User.query.filter_by(role='Administrador').first()
-        
         if existing_admin:
             flash('El sistema ya tiene un administrador.', 'danger')
             return render_template('register_admin.html', opciones=opciones_institucion)
@@ -78,10 +80,7 @@ def register_admin():
         nombres = request.form.get('nombres')
         apellidos = request.form.get('apellidos')
         cedula = request.form.get('cedula')
-        # celular = request.form.get('celular') # ELIMINADO
         institucion = request.form.get('institucion_deportiva')
-        # pais = "Ecuador" # ELIMINADO (se puede reintroducir si es necesario en la DB)
-        # provincia = "Cotopaxi" # ELIMINADO (se puede reintroducir si es necesario en la DB)
         canton = request.form.get('canton')
         email = request.form.get('email')
         username = request.form.get('username')
@@ -91,27 +90,18 @@ def register_admin():
 
         if password != confirm_password:
             flash('Las contraseñas no coinciden.', 'danger')
-            return render_template('register_admin.html', opciones=opciones_institucion,
-                                   nombres=nombres, apellidos=apellidos, cedula=cedula,
-                                   institucion_deportiva=institucion, canton=canton,
-                                   email=email, username=username, recuperacion_email=recuperacion_email)
+            return render_template('register_admin.html', opciones=opciones_institucion)
 
-        # Validar si usuario, email o cédula ya existen
         if User.query.filter((User.email == email) | (User.username == username) | (User.cedula == cedula)).first():
              flash('El usuario, correo o cédula ya están registrados.', 'danger')
-             return render_template('register_admin.html', opciones=opciones_institucion,
-                                    nombres=nombres, apellidos=apellidos, cedula=cedula,
-                                    institucion_deportiva=institucion, canton=canton,
-                                    email=email, username=username, recuperacion_email=recuperacion_email)
-
+             return render_template('register_admin.html', opciones=opciones_institucion)
 
         hashed_password = generate_password_hash(password)
         
         new_admin = User(
             nombres=nombres, apellidos=apellidos, cedula=cedula, 
-            # celular=celular, # Si se elimina del HTML, debe eliminarse de aquí o asignarle un valor por defecto
-            institucion_deportiva=institucion, pais="Ecuador", provincia="Cotopaxi", # Estos se mantienen con valores por defecto
-            canton=canton, email=email, username=username, password_hash=hashed_password,
+            institucion_deportiva=institucion, canton=canton, 
+            email=email, username=username, password_hash=hashed_password,
             recuperacion_email=recuperacion_email, role='Administrador'
         )
 
@@ -123,10 +113,7 @@ def register_admin():
         except Exception as e:
             db.session.rollback()
             flash(f'Error al guardar: {str(e)}', 'danger')
-            return render_template('register_admin.html', opciones=opciones_institucion,
-                                   nombres=nombres, apellidos=apellidos, cedula=cedula,
-                                   institucion_deportiva=institucion, canton=canton,
-                                   email=email, username=username, recuperacion_email=recuperacion_email)
+            return render_template('register_admin.html', opciones=opciones_institucion)
 
     return render_template('register_admin.html', opciones=opciones_institucion)
 
