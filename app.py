@@ -130,7 +130,7 @@ def register_admin():
             flash(f'Error al guardar: {str(e)}', 'danger')
             return render_template('register_admin.html', opciones=opciones_institucion)
 
-    return render_template('register_admin.html', opciones=opciones_institucion)
+    #return render_template('register_admin.html', opciones=opciones_institucion)
 
 if __name__ == '__main__':
     app.run(debug=True)
