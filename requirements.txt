@@ -1,7 +1,0 @@
-Flask
-gunicorn
-Flask-SQLAlchemy
-psycopg2-binary
-python-dotenv
-Werkzeug
-email_validator
