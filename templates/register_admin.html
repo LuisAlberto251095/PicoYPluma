@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alta de Propietario - Sistema Pico y Pluma</title>
+
+    <style>
+        /* =========================
+           VARIABLES DE DISEÑO
+        ========================= */
+        :root {
+            --bg-gradient-start: #8fa3b8;
+            --bg-gradient-end: #5f738a;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #d1d5db;
+            --highlight: #2f855a;        /* Verde Éxito */
+            --highlight-hover: #276749;
+            --error-color: #dc2626;      /* Rojo Error */
+            --error-bg: #fee2e2;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .main-panel {
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 40px 45px;
+            box-sizing: border-box;
+        }
+
+        .panel-header {
+            margin-bottom: 35px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eef0f3;
+        }
+
+        .panel-header h2 { margin: 0; font-size: 1.8rem; font-weight: 700; }
+        .panel-header p { margin-top: 6px; font-size: 0.95rem; color: var(--text-secondary); }
+
+        /* GRID SYSTEM */
+        .form-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 22px; }
+        .span-6 { grid-column: span 6; }
+        .span-4 { grid-column: span 4; }
+        .span-3 { grid-column: span 3; }
+        .span-2 { grid-column: span 2; }
+
+        .section-title {
+            grid-column: span 6;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+        }
+        .section-title::after { content: ""; flex: 1; height: 1px; background: #e5e7eb; margin-left: 15px; }
+
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.9rem; font-weight: 500; margin-bottom: 6px; }
+
+        .input-group input, .input-group select {
+            padding: 14px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background-color: #f9fafb;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            outline: none; border-color: var(--highlight); background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(47,133,90,0.15);
+        }
+
+        /* ERRORES */
+        .input-group input.input-error {
+            border-color: var(--error-color) !important;
+            background-color: #fff5f5 !important;
+            animation: shake 0.3s ease-in-out;
+        }
+        .input-group label.label-error { color: var(--error-color); }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%, 75% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+        }
+
+        /* OJO PASSWORD */
+        .pwd-container { position: relative; }
+        .pwd-toggle { position: absolute; right: 14px; top: 44px; width: 20px; opacity: 0.6; cursor: pointer; }
+        .pwd-toggle:hover { opacity: 1; }
+
+        /* BOTONES */
+        .button-row {
+            grid-column: span 6; margin-top: 35px; padding-top: 25px;
+            border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 15px;
+        }
+        .btn { padding: 12px 28px; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-decoration: none; border: none; }
+        .btn-primary { background-color: var(--highlight); color: white; }
+        .btn-primary:hover { background-color: var(--highlight-hover); }
+        .btn-secondary { background-color: #ffffff; color: #374151; border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #f9fafb; }
+
+        /* TOAST */
+        #toast-container {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
+            text-align: center; border-radius: 8px; padding: 16px; position: fixed;
+            z-index: 1000; left: 50%; top: 30px; transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px;
+            opacity: 0; transition: opacity 0.3s, top 0.3s;
+        }
+        #toast-container.show { visibility: visible; opacity: 1; top: 50px; }
+        #toast-container.error { background-color: var(--error-color); }
+
+        @media (max-width: 1000px) { .form-grid { grid-template-columns: repeat(2, 1fr); } .span-6, .span-4, .span-3, .span-2 { grid-column: span 2; } }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .span-6, .span-4, .span-3, .span-2 { grid-column: span 1; } .button-row { flex-direction: column-reverse; } .btn { width: 100%; text-align: center; } }
+    </style>
+</head>
+
+<body>
+
+<div id="toast-container">
+    <span id="toast-icon">⚠️</span>
+    <span id="toast-message">Mensaje aquí</span>
+</div>
+
+<div class="main-panel">
+    <div class="panel-header">
+        <h2>Nuevo Registro de Propietario</h2>
+        <p>Complete todos los campos para configurar la instancia de la base de datos.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fca5a5;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form id="registroForm" action="{{ url_for('create_account') }}" method="POST" novalidate>
+        <div class="form-grid">
+
+            <div class="section-title">Información Institucional</div>
+            <div class="input-group span-4">
+                <label>Nombre de la Granja / Razón Social *</label>
+                <input type="text" name="nombre_granja" required placeholder="">
+            </div>
+            <div class="input-group span-2">
+                <label>RUC / ID Granja *</label>
+                <input type="text" name="cedula" required placeholder="">
+            </div>
+
+            <div class="section-title">Datos del Representante Legal</div>
+            <div class="input-group span-3">
+                <label>Nombres *</label>
+                <input type="text" name="nombres" required placeholder="">
+            </div>
+            <div class="input-group span-3">
+                <label>Apellidos *</label>
+                <input type="text" name="apellidos" required placeholder="">
+            </div>
+
+            <div class="section-title">Ubicación Geográfica</div>
+            <div class="input-group span-2">
+                <label>País *</label>
+                <input type="text" name="pais" required placeholder="">
+            </div>
+            <div class="input-group span-2">
+                <label>Provincia *</label>
+                <input type="text" name="provincia" required placeholder="">
+            </div>
+            <div class="input-group span-2">
+                <label>Ciudad *</label>
+                <input type="text" name="ciudad" required placeholder="">
+            </div>
+            <div class="input-group span-6">
+                <label>Dirección Completa *</label>
+                <input type="text" name="direccion" required placeholder="">
+            </div>
+
+            <div class="section-title">Seguridad y Acceso</div>
+
+            <div class="input-group span-3">
+                <label>Correo Electrónico (Login y Recuperación) *</label>
+                <input type="email" name="email" required placeholder="ejemplo@correo.com">
+            </div>
+
+            <div class="input-group span-3">
+                <label>Nombre de Usuario *</label>
+                <input type="text" name="username" required placeholder="">
+            </div>
+
+            <div class="input-group span-3 pwd-container">
+                <label>Contraseña *</label>
+                <input type="password" name="password" id="password" required>
+                <img src="{{ url_for('static', filename='img/Ojo.png') }}" class="pwd-toggle" onclick="togglePassword('password')">
+            </div>
+            <div class="input-group span-3 pwd-container">
+                <label>Repetir Contraseña *</label>
+                <input type="password" name="confirm_password" id="confirm" required>
+                <img src="{{ url_for('static', filename='img/Ojo.png') }}" class="pwd-toggle" onclick="togglePassword('confirm')">
+            </div>
+
+            <div class="button-row">
+                <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Registrar Propietario</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    document.getElementById('registroForm').addEventListener('submit', function(event) {
+        let isValid = true;
+        let firstErrorInput = null;
+
+        const requiredInputs = this.querySelectorAll('input[required]');
+        requiredInputs.forEach(input => {
+            resetError(input);
+            if (!input.value.trim()) {
+                isValid = false;
+                showError(input);
+                if (!firstErrorInput) firstErrorInput = input;
+            }
+        });
+
+        const pass = document.getElementById('password');
+        const confirm = document.getElementById('confirm');
+        if (pass.value && confirm.value && pass.value !== confirm.value) {
+            isValid = false;
+            showError(confirm);
+            showToast("Las contraseñas no coinciden", true);
+            event.preventDefault();
+            return;
+        }
+
+        if (!isValid) {
+            event.preventDefault();
+            showToast("Por favor, llene todos los campos obligatorios.", true);
+            if (firstErrorInput) {
+                firstErrorInput.focus();
+                firstErrorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+
+    function showError(input) {
+        input.classList.add('input-error');
+        let label = input.previousElementSibling;
+        if (label && label.tagName === 'LABEL') label.classList.add('label-error');
+    }
+
+    function resetError(input) {
+        input.classList.remove('input-error');
+        let label = input.previousElementSibling;
+        if (label && label.tagName === 'LABEL') label.classList.remove('label-error');
+    }
+
+    const allInputs = document.querySelectorAll('input, select');
+    allInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.classList.contains('input-error')) resetError(this);
+        });
+    });
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById("toast-container");
+        const msgElement = document.getElementById("toast-message");
+        msgElement.innerText = message;
+        if (isError) {
+            toast.classList.add("error");
+            document.getElementById("toast-icon").innerText = "⚠️";
+        } else {
+            toast.classList.remove("error");
+            document.getElementById("toast-icon").innerText = "✅";
+        }
+        toast.className = "show " + (isError ? "error" : "");
+        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3500);
+    }
+</script>
+
+</body>
+</html>

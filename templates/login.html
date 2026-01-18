@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Registros e Inventario Avícola – Pico y Pluma</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stily.css') }}?v=2.0">
+
+    <style>
+        .eye-icon img {
+            cursor: pointer; /* Hace que salga la manito al pasar el mouse */
+            width: 20px;     /* Ajusta el tamaño si es necesario */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="right-section">
+            <img src="{{ url_for('static', filename='img/LogoPP.png') }}" alt="LogoPP" class="logopp-img">
+
+            <h1>Sistema de Registros e Inventario Avícola – Pico y Pluma</h1>
+            <p class="subtitle">Ingrese sus Datos</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div style="background-color: #fee2e2; color: #dc2626; padding: 10px; margin-bottom: 10px; border-radius: 5px; text-align: center;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="/login" method="POST">
+                <div class="input-group">
+                    <span class="icon-box">
+                        <img src="{{ url_for('static', filename='img/Logo usuario.png') }}" alt="User Icon">
+                    </span>
+                    <input type="text" name="username" placeholder="Usuario" required>
+                </div>
+
+                <div class="input-group">
+                    <span class="icon-box">
+                        <img src="{{ url_for('static', filename='img/Candado.png') }}" alt="Lock Icon">
+                    </span>
+
+                    <input type="password" name="password" id="passwordInput" placeholder="Contraseña" required>
+
+                    <span class="eye-icon">
+                        <img src="{{ url_for('static', filename='img/Ojo.png') }}" alt="Ver" onclick="togglePassword()">
+                    </span>
+                </div>
+
+                <button type="submit" class="btn btn-orange">Iniciar Sesión</button>
+
+                <a href="{{ url_for('forgot_password') }}" class="btn btn-yellow" style="text-decoration: none; display: inline-block; text-align: center;">¿Olvidó su Contraseña?</a>
+
+                <a href="{{ url_for('create_account') }}" class="btn btn-green" style="text-decoration: none; display: inline-block; text-align: center;">Crear Cuenta</a>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            var input = document.getElementById("passwordInput");
+            if (input.type === "password") {
+                input.type = "text"; // Muestra el texto
+            } else {
+                input.type = "password"; // Lo vuelve a ocultar
+            }
+        }
+    </script>
+
+</body>
+</html>
