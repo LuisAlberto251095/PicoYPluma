@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Clientes - Pico y Pluma</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stily.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #f4f6f9; padding: 20px; font-family: sans-serif; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-add { background: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor: pointer; border: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #2c3e50; color: white; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; width: 400px; margin: 100px auto; padding: 20px; border-radius: 10px; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-users"></i> Gestión de Clientes</h2>
+            <div>
+                <a href="{{ url_for('menu_principal') }}" style="margin-right: 15px; text-decoration: none; color: #555;">Volver</a>
+                <button onclick="document.getElementById('modalCliente').style.display='block'" class="btn-add">+ Nuevo Cliente</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Cédula/RUC</th>
+                    <th>Teléfono</th>
+                    <th>Dirección</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clientes %}
+                <tr>
+                    <td>{{ c.nombre }}</td>
+                    <td>{{ c.cedula_ruc }}</td>
+                    <td>{{ c.telefono }}</td>
+                    <td>{{ c.direccion }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;">No hay clientes registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="modalCliente" class="modal">
+        <div class="modal-content">
+            <span onclick="document.getElementById('modalCliente').style.display='none'" style="float:right; cursor:pointer; font-size:20px;">&times;</span>
+            <h3>Agregar Cliente</h3>
+            <form method="POST">
+                <label>Nombre Completo:</label>
+                <input type="text" name="nombre" required>
+                <label>Cédula o RUC:</label>
+                <input type="text" name="cedula">
+                <label>Teléfono:</label>
+                <input type="text" name="telefono">
+                <label>Dirección:</label>
+                <input type="text" name="direccion">
+                <label>Observaciones:</label>
+                <textarea name="observaciones"></textarea>
+                <button type="submit" class="btn-add" style="width:100%;">Guardar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Sistema Pico y Pluma</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stily.css') }}">
+    <style>
+        /* Estilos específicos para el formulario */
+        body {
+            background-color: #222;
+            background-image: url('{{ url_for("static", filename="img/Granja.png") }}');
+            background-size: cover;
+            background-attachment: fixed;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .main-panel {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .header-title h1 {
+            color: #27AE60;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-box { margin-bottom: 15px; }
+        .input-box label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .input-box input, .input-box select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;
+        }
+        .btn-submit {
+            width: 100%; padding: 12px; background-color: #27AE60; color: white;
+            border: none; border-radius: 5px; font-size: 16px; cursor: pointer;
+        }
+        .btn-submit:hover { background-color: #219150; }
+        .alert { padding: 10px; margin-bottom: 15px; border-radius: 5px; text-align: center; }
+        .alert-danger { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="main-panel">
+    <div class="header-title">
+        <h1>
+            {% if tipo == 'admin' %}
+                Registro de Propietario
+            {% else %}
+                Registro de Colaborador
+            {% endif %}
+        </h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('create_account', tipo=tipo) }}" method="POST">
+
+        {% if tipo == 'admin' %}
+        <div class="input-box">
+            <label>Nombre de la Granja</label>
+            <input type="text" name="nombre_granja" required placeholder="Ingrese nombre de la granja">
+        </div>
+        {% endif %}
+
+        <div class="input-box">
+            <label>Cédula</label>
+            <input type="text" name="cedula" required placeholder="Ingrese su cédula">
+        </div>
+
+        <div class="input-box">
+            <label>Nombres</label>
+            <input type="text" name="nombres" required placeholder="Sus nombres">
+        </div>
+
+        <div class="input-box">
+            <label>Apellidos</label>
+            <input type="text" name="apellidos" required placeholder="Sus apellidos">
+        </div>
+
+        <div class="input-box">
+            <label>País</label>
+            <input type="text" name="pais" required value="Ecuador">
+        </div>
+
+        <div class="input-box">
+            <label>Provincia</label>
+            <input type="text" name="provincia" required placeholder="Provincia">
+        </div>
+
+        <div class="input-box">
+            <label>Ciudad</label>
+            <input type="text" name="ciudad" required placeholder="Ciudad">
+        </div>
+
+        <div class="input-box">
+            <label>Dirección</label>
+            <input type="text" name="direccion" required placeholder="Dirección domiciliaria">
+        </div>
+
+        <div class="input-box">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="correo@ejemplo.com">
+        </div>
+
+        <div class="input-box">
+            <label>Nombre de Usuario</label>
+            <input type="text" name="username" required placeholder="Usuario para login">
+        </div>
+
+        <div class="input-box">
+            <label>Contraseña</label>
+            <input type="password" name="password" required placeholder="Contraseña segura">
+        </div>
+
+        <div class="input-box">
+            <label>Confirmar Contraseña</label>
+            <input type="password" name="confirm_password" required placeholder="Repita la contraseña">
+        </div>
+
+        <button type="submit" class="btn-submit">Registrar</button>
+
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="{{ url_for('seleccionar_tipo') }}">Volver atrás</a>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

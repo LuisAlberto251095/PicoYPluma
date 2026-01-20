@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleccionar Tipo de Cuenta</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stily.css') }}">
+
+    <style>
+        /* ESTILOS EXCLUSIVOS PARA ESTA PÁGINA (PROFESIONAL) */
+        body {
+            /* Aseguramos que el fondo se vea bien */
+            background-image: url('{{ url_for("static", filename="img/Granja.png") }}');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Capa oscura para mejorar lectura */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Oscurece el fondo un 60% */
+            z-index: 0;
+        }
+
+        .container-selection {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .main-title {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            color: #ddd;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        /* Contenedor de las Tarjetas */
+        .cards-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 30px; /* Espacio entre tarjetas */
+            flex-wrap: wrap;
+        }
+
+        /* Diseño de cada Tarjeta */
+        .role-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px 30px;
+            width: 300px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            border-top: 5px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Efecto al pasar el mouse */
+        .role-card:hover {
+            transform: translateY(-10px); /* Sube un poco */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        /* Colores específicos por rol */
+        .role-admin { border-top-color: #27AE60; } /* Verde para admin */
+        .role-colab { border-top-color: #F39C12; } /* Naranja para colaborador */
+
+        /* Iconos (usando SVG para calidad HD) */
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 40px;
+        }
+
+        .icon-admin { background-color: #e8f8f0; color: #27AE60; }
+        .icon-colab { background-color: #fef5e7; color: #F39C12; }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            border-bottom: 1px solid transparent;
+            transition: 0.3s;
+            opacity: 0.8;
+        }
+
+        .back-link:hover {
+            border-bottom: 1px solid #fff;
+            opacity: 1;
+        }
+
+        /* Ajuste para celulares */
+        @media (max-width: 700px) {
+            .cards-wrapper { flex-direction: column; align-items: center; }
+            .role-card { width: 100%; max-width: 350px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="container-selection">
+        <h1 class="main-title">Bienvenido a Pico y Pluma</h1>
+        <p class="subtitle">Seleccione cómo desea registrarse en el sistema</p>
+
+        <div class="cards-wrapper">
+
+            <a href="{{ url_for('create_account', tipo='admin') }}" class="role-card role-admin">
+                <div class="card-icon icon-admin">
+                    👑 </div>
+                <div class="card-title">Propietario</div>
+                <div class="card-desc">
+                </div>
+            </a>
+
+            <a href="{{ url_for('create_account', tipo='colaborador') }}" class="role-card role-colab">
+                <div class="card-icon icon-colab">
+                    🤝
+                </div>
+                <div class="card-title">Colaborador</div>
+                <div class="card-desc">
+                </div>
+            </a>
+
+        </div>
+
+        <a href="{{ url_for('home') }}" class="back-link">← Volver al Inicio de Sesión</a>
+    </div>
+
+</body>
+</html>

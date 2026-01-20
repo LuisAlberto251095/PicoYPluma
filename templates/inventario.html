@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario de Aves</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stily.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* VISIBILIDAD FORZADA DE TEXTOS */
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; padding: 20px; color: #000 !important; }
+
+        .container { max-width: 1300px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* Asegurar que las etiquetas y tablas sean negras */
+        label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: 800; color: #000 !important; font-size: 0.95rem; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; color: #000 !important; }
+        th { background-color: #2c3e50; color: white !important; text-align: left; }
+
+        /* Inputs visibles */
+        input, select, textarea {
+            width: 100%; padding: 10px; border: 2px solid #aaa; border-radius: 5px;
+            font-size: 1rem; color: #000; background: #fff;
+        }
+
+        .header-inv { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-add { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; overflow-y: auto;}
+        .modal-content { background: white; width: 500px; margin: 50px auto; padding: 30px; border-radius: 10px; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 25px; cursor: pointer; color: #e74c3c; }
+
+        .hidden { display: none; }
+
+        /* Botones de acción */
+        .btn-action { padding: 5px 10px; border-radius: 4px; text-decoration: none; margin-right: 5px; display: inline-block;}
+        .btn-edit { background-color: #f39c12; color: white !important; }
+        .btn-del { background-color: #e74c3c; color: white !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-inv">
+            <h2><i class="fas fa-kiwi-bird"></i> Inventario de Aves</h2>
+            <div>
+                <a href="{{ url_for('menu_principal') }}" style="margin-right: 15px; color: #000; text-decoration: none; font-weight: bold;">Volver al Menú</a>
+                <button onclick="openModal('modalAgregar')" class="btn-add">+ Agregar Nuevo Lote</button>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div style="padding: 10px; margin-bottom: 15px; border-radius: 5px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Lote</th>
+                    <th>Especie</th>
+                    <th>Raza/Color</th>
+                    <th>Sexo</th>
+                    <th>Cant.</th>
+                    <th>Costo Unit.</th>
+                    <th>Costo Total</th> <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ave in aves %}
+                <tr>
+                    <td><strong>{{ ave.lote_codigo }}</strong></td>
+                    <td>{{ ave.especie }}</td>
+                    <td>{{ ave.raza_color }}</td>
+                    <td>
+                        {{ ave.sexo }}
+                        {% if ave.sexo == 'Mixto' %}
+                           <br><small style="color:#555;">({{ ave.cant_machos }}M / {{ ave.cant_hembras }}H)</small>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight: bold;">{{ ave.cantidad }}</td>
+                    <td>${{ "%.2f"|format(ave.costo_unitario) }}</td>
+
+                    <td style="color: #27ae60; font-weight: bold;">
+                        ${{ "%.2f"|format(ave.cantidad * ave.costo_unitario) }}
+                    </td>
+
+                    <td>
+                        <button class="btn-action btn-edit" title="Editar"
+                                onclick="prepararEdicion(
+                                    '{{ ave.id }}',
+                                    '{{ ave.lote_codigo }}',
+                                    '{{ ave.especie }}',
+                                    '{{ ave.raza_color }}',
+                                    '{{ ave.sexo }}',
+                                    '{{ ave.cantidad }}',
+                                    '{{ ave.cant_machos }}',
+                                    '{{ ave.cant_hembras }}',
+                                    '{{ ave.fecha_nacimiento }}',
+                                    '{{ ave.costo_unitario }}',
+                                    '{{ ave.observaciones }}'
+                                )">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+
+                        <a href="{{ url_for('eliminar_ave', id=ave.id) }}"
+                           class="btn-action btn-del"
+                           onclick="return confirm('⚠️ ¿Estás seguro de que quieres borrar este lote? Esta acción no se puede deshacer.')"
+                           title="Eliminar">
+                           <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" style="text-align:center; padding: 20px;">No hay registros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="modalAgregar" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalAgregar')">&times;</span>
+            <h3>Registrar Nuevo Lote</h3>
+            <form action="{{ url_for('guardar_ave') }}" method="POST">
+                {% include 'form_ave_partial.html' %} <button type="submit" class="btn-add" style="width: 100%; margin-top: 20px;">Guardar Registro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEditar" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('modalEditar')">&times;</span>
+            <h3 style="color: #f39c12;">Editar Lote</h3>
+            <form id="formEditar" action="" method="POST">
+                {% include 'form_ave_partial.html' %}
+                <button type="submit" class="btn-add" style="background:#f39c12; width: 100%; margin-top: 20px;">Actualizar Datos</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Lógica para mostrar campos de cantidad según sexo (se aplica a ambos modales)
+        function toggleCantidadInputs(context) {
+            // context puede ser el form dentro de agregar o editar
+            let form = context.closest('form');
+            let sexo = form.querySelector('.selectSexo').value;
+            let divSimple = form.querySelector('.divSimple');
+            let divMixto = form.querySelector('.divMixto');
+            let inputSimple = form.querySelector('.inputSimple');
+
+            if (sexo === "Mixto") {
+                divSimple.style.display = "none";
+                divMixto.style.display = "block";
+                inputSimple.value = "";
+            } else {
+                divSimple.style.display = "block";
+                divMixto.style.display = "none";
+                if(inputSimple.value === "") inputSimple.value = "1";
+            }
+        }
+
+        // Cargar datos en el modal de edición
+        function prepararEdicion(id, lote, especie, raza, sexo, cantTotal, cantM, cantH, fecha, costo, obs) {
+            let form = document.getElementById('formEditar');
+            form.action = "/editar_ave/" + id;
+
+            form.querySelector('[name="lote_codigo"]').value = lote;
+            form.querySelector('[name="especie"]').value = especie;
+            form.querySelector('[name="raza_color"]').value = raza;
+            form.querySelector('[name="fecha_nacimiento"]').value = fecha;
+            form.querySelector('[name="costo_unitario"]').value = costo;
+            form.querySelector('[name="observaciones"]').value = obs;
+
+            let selectSexo = form.querySelector('.selectSexo');
+            selectSexo.value = sexo;
+
+            // Llenar cantidades
+            if (sexo === 'Mixto') {
+                form.querySelector('[name="input_machos"]').value = cantM;
+                form.querySelector('[name="input_hembras"]').value = cantH;
+            } else {
+                form.querySelector('[name="cantidad_simple"]').value = cantTotal;
+            }
+
+            toggleCantidadInputs(selectSexo); // Actualizar visibilidad
+            openModal('modalEditar');
+        }
+    </script>
+
+    <script type="text/template" id="formTemplate">
+        <label>Código de Lote:</label>
+        <input type="text" name="lote_codigo" required>
+
+        <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+                <label>Especie:</label>
+                <select name="especie">
+                    <option value="Brahmas">Brahmas</option>
+                    <option value="Silkies">Silkies</option>
+                    <option value="Gallinas de Guinea">Gallinas de Guinea</option>
+                    <option value="Pavos">Pavos</option>
+                    <option value="Patos">Patos</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label>Sexo:</label>
+                <select name="sexo" class="selectSexo" onchange="toggleCantidadInputs(this)">
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                    <option value="Mixto">Mixto (Lote)</option>
+                </select>
+            </div>
+        </div>
+
+        <label>Raza y Color:</label>
+        <input type="text" name="raza_color" required>
+
+        <div class="divSimple">
+            <label>Cantidad Total:</label>
+            <input type="number" name="cantidad_simple" class="inputSimple" value="1" min="1">
+        </div>
+
+        <div class="divMixto hidden" style="background: #e9ecef; padding: 10px; border-radius: 5px;">
+            <label>Desglose (Machos / Hembras):</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" name="input_machos" placeholder="Machos" min="0">
+                <input type="number" name="input_hembras" placeholder="Hembras" min="0">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+                <label>Nacimiento:</label>
+                <input type="date" name="fecha_nacimiento" required>
+            </div>
+            <div style="flex: 1;">
+                <label>Costo Unitario ($):</label>
+                <input type="number" step="0.01" name="costo_unitario">
+            </div>
+        </div>
+
+        <label>Observaciones:</label>
+        <textarea name="observaciones" rows="2"></textarea>
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let tpl = document.getElementById('formTemplate').innerHTML;
+            document.querySelectorAll('form').forEach(f => {
+                // Solo inyectar si no tiene contenido (para no borrar botones)
+                let div = document.createElement('div');
+                div.innerHTML = tpl;
+                f.insertBefore(div, f.firstChild);
+            });
+        });
+    </script>
+
+</body>
+</html>
