@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Balance Financiero | Pico y Pluma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Poppins', sans-serif; color: #2c3e50; }
+        .text-profit { color: #27ae60; }
+        .text-loss { color: #e74c3c; }
+        .bg-profit { background-color: #eafaf1; border-left: 5px solid #27ae60; }
+        .bg-loss { background-color: #fdedec; border-left: 5px solid #e74c3c; }
+
+        .card-finance {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .card-finance:hover { transform: translateY(-3px); }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #34495e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .balance-hero {
+            border-radius: 20px; padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .balance-hero.positive { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .balance-hero.negative { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+
+        .icon-box {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0"><i class="fas fa-chart-line text-primary me-2"></i>Estado de Resultados</h2>
+        <a href="{{ url_for('menu_principal') }}" class="btn btn-dark"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
+    </div>
+
+    <div class="card card-finance p-4 mb-5">
+        <form method="GET" action="{{ url_for('datos_financieros') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label text-muted fw-bold small"><i class="far fa-calendar-alt me-1"></i> Fecha de Inicio:</label>
+                <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-muted fw-bold small"><i class="far fa-calendar-alt me-1"></i> Fecha Fin:</label>
+                <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin }}" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="fas fa-search me-2"></i>Calcular Periodo</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="mb-5">
+        <div class="section-title">
+            <i class="fas fa-clock me-2"></i>Resultados del Periodo:
+            <span class="text-primary">{{ fecha_inicio }} al {{ fecha_fin }}</span>
+        </div>
+
+        <div class="balance-hero mb-4 {% if balance_periodo >= 0 %}positive{% else %}negative{% endif %}">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h3 class="fw-bold mb-1">Utilidad Neta del Periodo</h3>
+                    <p class="opacity-75 mb-2">Ingresos Netos Totales menos (Compras + Insumos + Pérdidas)</p>
+                    <div class="badge bg-light text-dark p-2 px-3 rounded-pill">
+                        {% if balance_periodo >= 0 %}
+                            <i class="fas fa-arrow-trend-up text-success me-1"></i> Periodo Rentable
+                        {% else %}
+                            <i class="fas fa-arrow-trend-down text-danger me-1"></i> Pérdidas en el periodo
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-5 text-end">
+                    <h1 class="display-4 fw-bold mb-0">
+                        ${{ "%.2f"|format(balance_periodo) }}
+                    </h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="card card-finance p-4 bg-profit">
+                    <div class="icon-box bg-success text-white"><i class="fas fa-hand-holding-dollar"></i></div>
+                    <small class="text-muted fw-bold d-block">INGRESOS NETOS</small>
+                    <h4 class="text-success fw-bold mt-1">${{ "%.2f"|format(ingresos_periodo) }}</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-finance p-4 bg-white">
+                    <div class="icon-box bg-warning text-dark"><i class="fas fa-kiwi-bird"></i></div>
+                    <small class="text-muted fw-bold d-block">COMPRA DE AVES</small>
+                    <h4 class="text-dark fw-bold mt-1">${{ "%.2f"|format(compra_aves_periodo) }}</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-finance p-4 bg-white">
+                    <div class="icon-box bg-info text-white"><i class="fas fa-box"></i></div>
+                    <small class="text-muted fw-bold d-block">GASTO INSUMOS</small>
+                    <h4 class="text-dark fw-bold mt-1">${{ "%.2f"|format(compra_insumos_periodo) }}</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-finance p-4 bg-loss">
+                    <div class="icon-box bg-danger text-white"><i class="fas fa-skull-crossbones"></i></div>
+                    <small class="text-muted fw-bold d-block">PÉRDIDAS X MORTALIDAD</small>
+                    <h4 class="text-danger fw-bold mt-1">${{ "%.2f"|format(muertes_periodo) }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5 pt-3">
+        <div class="section-title text-muted"><i class="fas fa-globe me-2"></i>Histórico Global (Acumulado de todos los tiempos)</div>
+
+        <div class="card card-finance p-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4 class="fw-bold mb-1">Balance General Acumulado</h4>
+                    <p class="text-muted small mb-0">Rendimiento total de la granja desde el inicio de operaciones.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <h2 class="fw-bold {% if balance >= 0 %}text-profit{% else %}text-loss{% endif %} mb-0">
+                        ${{ "%.2f"|format(balance) }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 opacity-75">
+            <div class="col-md-3">
+                <div class="card card-finance p-3 border">
+                    <small class="text-muted fw-bold">TOTAL VENTAS NETAS</small>
+                    <h5 class="text-success mt-1">${{ "%.2f"|format(ingresos) }}</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-finance p-3 border">
+                    <small class="text-muted fw-bold">TOTAL COMPRA AVES</small>
+                    <h5 class="text-dark mt-1">${{ "%.2f"|format(compra_aves) }}</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-finance p-3 border">
+                    <small class="text-muted fw-bold">TOTAL INSUMOS</small>
+                    <h5 class="text-dark mt-1">${{ "%.2f"|format(compra_insumos) }}</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-finance p-3 border border-danger">
+                    <small class="text-danger fw-bold">TOTAL MORTALIDAD</small>
+                    <h5 class="text-danger mt-1">${{ "%.2f"|format(muertes) }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

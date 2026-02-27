@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificar Código</title>
+    <style>
+        body { background: #8fa3b8; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        input { width: 90%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 5px; text-align: center; letter-spacing: 5px; font-size: 1.2rem; text-transform: uppercase; }
+        .btn { background: #2f855a; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 1rem; }
+        .alert { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .info { background: #e0f2fe; color: #075985; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Verificación de Seguridad</h2>
+        <p>Ingrese el código de 8 caracteres.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ 'alert' if category == 'danger' else 'info' }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="text" name="token" placeholder="Ej: A1B2C3D4" maxlength="8" required>
+            <button type="submit" class="btn">Verificar Código</button>
+        </form>
+    </div>
+</body>
+</html>

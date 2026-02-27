@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión - {{ origen if origen else 'Compras' }} | Pico y Pluma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f4f7f6;
+            --text-dark: #34495e;
+            --text-muted: #7f8c8d;
+        }
+        body {
+            background-color: var(--bg);
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+        }
+
+        .premium-wrapper {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .nav-main-header {
+            background: var(--primary);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+        }
+        /* CLASE PARA DIFERENCIAR VISUALMENTE PRODUCCIÓN */
+        .produccion-mode {
+            background: #27ae60 !important; /* Verde distintivo */
+        }
+
+        .nav-main-header .nav-link {
+            color: rgba(255,255,255,0.6);
+            padding: 22px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-bottom: 4px solid transparent;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .nav-main-header .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.05);
+        }
+        .nav-main-header .nav-link.active {
+            color: white;
+            border-bottom-color: var(--accent);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-sub-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f7;
+            padding: 18px 25px;
+        }
+        .nav-sub-header .nav-pills .nav-link {
+            color: #718096;
+            font-weight: 500;
+            padding: 10px 25px;
+            border-radius: 50px;
+            margin-right: 12px;
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+        .nav-sub-header .nav-pills .nav-link:hover {
+            background: #f8fafc;
+            color: var(--primary);
+        }
+        .nav-sub-header .nav-pills .nav-link.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.35);
+        }
+
+        .table-container { padding: 35px; }
+
+        .table { border-collapse: separate; border-spacing: 0 12px; }
+
+        .table thead th {
+            border: none;
+            color: var(--text-dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding-left: 15px;
+            background: transparent;
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border-radius: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .table td {
+            vertical-align: middle;
+            padding: 18px 15px;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+        }
+        .table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        .badge-lote { background: #3498db; color: white; padding: 5px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
+        .badge-edad { background: #fff; border: 1px solid #27ae60; color: #27ae60; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+
+        .btn-add {
+            background: var(--success); color: white !important; border-radius: 10px; padding: 10px 25px;
+            font-weight: 600; border: none; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); text-decoration: none;
+            display: inline-flex; align-items: center;
+        }
+        .btn-add:hover { background: #219150; transform: translateY(-1px); }
+
+        .action-btn {
+            width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 8px; margin: 0 2px; text-decoration: none; transition: 0.2s;
+        }
+        .btn-edit { background: #fff8e1; color: #f39c12; }
+        .btn-edit:hover { background: #f39c12; color: white; }
+        .btn-delete { background: #ffebee; color: #e74c3c; }
+        .btn-delete:hover { background: #e74c3c; color: white; }
+
+        .sexo-tag {
+            font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: block; margin-bottom: 2px;
+        }
+        .tag-m { background-color: #e3f2fd; color: #1976d2; }
+        .tag-h { background-color: #fce4ec; color: #c2185b; }
+
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-lg-5">
+    <div class="premium-wrapper">
+
+        <nav class="nav-main-header {% if origen == 'Produccion' %}produccion-mode{% endif %} d-flex align-items-center">
+
+            <a class="nav-link {% if categoria_principal == 'aves' %}active{% endif %}"
+               href="{{ url_for('ver_etapa', etapa='nacidos', origen=origen) }}">
+                <i class="fas fa-dove me-2"></i> Aves
+            </a>
+
+            {% if origen != 'Produccion' %}
+            <a class="nav-link {% if categoria_principal == 'insumos' %}active{% endif %}"
+               href="{{ url_for('lista_insumos', origen=origen) }}">
+                <i class="fas fa-boxes me-2"></i> Insumos
+            </a>
+            {% endif %}
+
+            <div class="d-none d-md-flex align-items-center ms-auto">
+                <a href="{{ url_for('menu_principal') }}"
+                   class="btn btn-sm btn-outline-light opacity-75 border-0 text-white text-decoration-none">
+                    <i class="fas fa-home me-1"></i> Panel
+                </a>
+            </div>
+
+        </nav>
+
+        <div class="nav-sub-header">
+            <ul class="nav nav-pills">
+                {% if categoria_principal == 'insumos' %}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-list me-2"></i>Datos/Productos</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if etapa == 'nacidos' %}active{% endif %}" href="{{ url_for('ver_etapa', etapa='nacidos', origen=origen) }}">
+                            <i class="fas fa-egg me-2"></i>Nacidos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if etapa == 'desarrollo' %}active{% endif %}" href="{{ url_for('ver_etapa', etapa='desarrollo', origen=origen) }}">
+                            <i class="fas fa-feather me-2"></i>Desarrollo
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if etapa == 'engorde' %}active{% endif %}" href="{{ url_for('ver_etapa', etapa='engorde', origen=origen) }}">
+                            <i class="fas fa-kiwi-bird me-2"></i>Grandes/Reproductores
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="table-container">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <div>
+                    <h4 class="fw-bold text-dark m-0">
+                        {% if categoria_principal == 'insumos' %}
+                            Inventario de Insumos
+                        {% else %}
+                            {% if origen == 'Produccion' %}
+                                <span class="text-success">Producción Interna:</span>
+                            {% else %}
+                                <span class="text-warning">Compras:</span>
+                            {% endif %}
+                            {{ 'Grandes/Reproductores' if etapa == 'engorde' else etapa|capitalize }}
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted small m-0">Gestión de registros y control.</p>
+                </div>
+
+                {% if categoria_principal == 'insumos' %}
+                    <a href="{{ url_for('registrar_insumo') }}" class="btn btn-add"><i class="fas fa-plus me-2"></i> Nuevo Insumo</a>
+                {% else %}
+                    <a href="{{ url_for('formulario_final_ave', etapa=etapa, origen=origen) }}" class="btn btn-add"><i class="fas fa-plus me-2"></i> Nuevo Registro</a>
+                {% endif %}
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        {% if categoria_principal == 'insumos' %}
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th>Fecha</th>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Descripción</th>
+                                <th>Cantidad</th>
+                                <th>Valor Unit.</th>
+                                <th>Valor Total</th>
+                                <th>Pago</th>
+                                <th class="text-center">Gestión</th>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th class="text-center">Fecha Registro</th>
+                                <th class="text-center">ID Lote</th>
+                                <th class="text-center">Tipo De Ave</th>
+                                <th class="text-center">Descripción/Color</th>
+                                <th class="text-center">Fecha Nacimiento</th>
+                                <th class="text-center">Edad Actual</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Valor Unitario</th>
+                                <th class="text-end">Valor Total</th>
+                                <th>Forma De Pago</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        {% endif %}
+                    </thead>
+                    <tbody>
+                        {% if categoria_principal == 'insumos' %}
+                            {% for item in insumos %}
+                            <tr>
+                                <td class="text-center fw-bold text-muted">{{ loop.index }}</td>
+                                <td>{{ item.fecha.strftime('%d/%m/%Y') }}</td>
+                                <td><span class="badge bg-light text-dark border">#{{ item.codigo }}</span></td>
+                                <td class="fw-bold">{{ item.producto }}</td>
+                                <td class="text-muted small">{{ item.descripcion }}</td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>${{ "%.2f"|format(item.valor_unitario) }}</td>
+                                <td class="text-success fw-bold">${{ "%.2f"|format(item.valor_total) }}</td>
+
+                                <td>
+                                    {{ item.forma_pago }}
+                                    {% if item.numero_comprobante %}
+                                        <br>
+                                        <small class="text-muted" style="font-size: 11px;">
+                                            <i class="fas fa-hashtag me-1"></i>{{ item.numero_comprobante }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                    <a href="{{ url_for('registrar_insumo', edit_id=item.id) }}" class="action-btn btn-edit"><i class="fas fa-pen"></i></a>
+                                    <a href="{{ url_for('eliminar_insumo', id=item.id) }}" class="action-btn btn-delete" onclick="return confirm('¿Eliminar insumo?')"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="10" class="text-center py-5 text-muted">No hay insumos registrados.</td></tr>
+                            {% endfor %}
+                        {% else %}
+                            {% if aves %}
+                                {% for ave in aves %}
+                                <tr>
+                                    <td class="text-center fw-bold text-muted">{{ loop.index }}</td>
+
+                                    <td>{{ ave.fecha_registro.strftime('%d/%m/%Y') if ave.fecha_registro else '--' }}</td>
+
+                                    <td><span class="badge-lote">{{ ave.lote_codigo }}</span></td>
+
+                                    <td class="fw-bold text-dark">{{ ave.tipo_ave }}</td>
+
+                                    <td class="text-muted small">{{ ave.descripcion }}</td>
+
+                                    <td>{{ ave.fecha_nacimiento.strftime('%d/%m/%Y') if ave.fecha_nacimiento else '--' }}</td>
+
+                                    <td><span class="badge-edad">{{ ave.fecha_nacimiento|calcular_edad }}</span></td>
+
+                                    <td class="text-center">
+                                        {% if etapa == 'desarrollo' or etapa == 'engorde' %}
+                                            {% if ave.cant_machos or ave.cant_hembras %}
+                                                <div class="d-inline-block text-start">
+                                                    <span class="sexo-tag tag-m">M: {{ ave.cant_machos }}</span>
+                                                    <span class="sexo-tag tag-h">H: {{ ave.cant_hembras }}</span>
+                                                </div>
+                                            {% else %}
+                                                <span class="fw-bold">{{ ave.cantidad }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="fw-bold">{{ ave.cantidad }}</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-end">
+                                        {% if etapa == 'desarrollo' or etapa == 'engorde' %}
+                                            {% if ave.precio_macho > 0 or ave.precio_hembra > 0 %}
+                                                <div class="d-flex flex-column align-items-end">
+                                                    {% if ave.precio_macho > 0 %}
+                                                        <span class="sexo-tag tag-m mb-1">M: ${{ "%.2f"|format(ave.precio_macho) }}</span>
+                                                    {% endif %}
+                                                    {% if ave.precio_hembra > 0 %}
+                                                        <span class="sexo-tag tag-h">H: ${{ "%.2f"|format(ave.precio_hembra) }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                ${{ "%.2f"|format(ave.costo_unitario) }}
+                                            {% endif %}
+                                        {% else %}
+                                            ${{ "%.2f"|format(ave.costo_unitario) }}
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-end text-success fw-bold">
+                                        ${{ "%.2f"|format(ave.monto_pago) }}
+                                    </td>
+
+                                    <td>
+                                        {% if origen == 'Produccion' %}
+                                            <span class="text-success fw-bold" style="font-size: 0.85rem;">
+                                                <i class="fas fa-industry me-1"></i>Producción Interna
+                                            </span>
+                                        {% else %}
+                                            <div style="font-size:0.9rem;">
+                                                {% if ave.forma_pago in ['Deposito', 'Transferencia'] %}
+                                                    Transferencia
+                                                {% else %}
+                                                    {{ ave.forma_pago if ave.forma_pago else '-' }}
+                                                {% endif %}
+                                            </div>
+                                            {% if ave.numero_comprobante %}
+                                                <small class="text-muted d-block" style="font-size: 11px;">
+                                                    <i class="fas fa-hashtag me-1"></i>{{ ave.numero_comprobante }}
+                                                </small>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{{ url_for('formulario_final_ave', etapa=etapa, edit_id=ave.id, origen=origen) }}" class="action-btn btn-edit" title="Editar">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                            <a href="{{ url_for('eliminar_ave', id=ave.id) }}" class="action-btn btn-delete" onclick="return confirm('¿Eliminar este lote? La numeración se reajustará automáticamente.')" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="12" class="text-center py-5 text-muted">No hay registros en esta etapa.</td></tr>
+                            {% endif %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

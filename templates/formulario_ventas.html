@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if venta %}Editar Venta{% else %}Registrar Venta{% endif %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Poppins', sans-serif; }
+        .container-form { max-width: 900px; margin: 40px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
+        .section-title { color: #2c3e50; font-weight: 600; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; margin-top: 30px; }
+        label { font-weight: 600; color: #555; margin-bottom: 5px; font-size: 0.9rem; }
+        .form-control, .form-select { border-radius: 8px; padding: 10px; border: 2px solid #edf2f7; }
+        .form-control:focus, .form-select:focus { border-color: #3498db; box-shadow: none; }
+        .edad-display { background-color: #EBF5FB; color: #17202A; font-weight: bold; text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 8px; }
+        .shipping-box { background-color: #fcfcfc; border: 1px dashed #3498db; padding: 15px; border-radius: 10px; }
+        .shipping-result { font-weight: bold; text-align: center; }
+        .total-box { background: #eefcf3; border: 1px solid #c3e6cb; padding: 20px; border-radius: 10px; text-align: right; }
+        .total-amount { font-size: 2rem; font-weight: bold; color: #27ae60; }
+        .neto-amount { font-size: 1.6rem; font-weight: bold; color: #1e8449; }
+        .hidden { display: none; }
+        .btn-save { background: #e67e22; color: white; width: 100%; padding: 12px; font-weight: 600; border: none; border-radius: 10px; margin-top: 20px; }
+        .btn-save:hover { background: #d35400; }
+        .stock-info { font-size: 0.85rem; margin-top: 5px; font-weight: bold; }
+        .text-stock-ok { color: #27ae60; }
+        .text-stock-low { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<div class="container-form">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-dark fw-bold m-0">{% if venta %}Editar Venta #{{ venta.id }}{% else %}Nueva Venta{% endif %}</h2>
+        <a href="{{ url_for('lista_ventas') }}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+    </div>
+
+    <form method="POST" id="formVenta">
+
+        <div class="row mb-3">
+            <div class="col-md-12 d-flex justify-content-end align-items-center">
+                <label class="me-2 mb-0">Fecha de Venta:</label>
+                <input type="date" name="fecha_venta" class="form-control w-auto" required
+                       value="{{ venta.fecha_venta.strftime('%Y-%m-%d') if venta and venta.fecha_venta else hoy }}">
+            </div>
+        </div>
+
+        <h4 class="section-title"><i class="fas fa-user-check me-2"></i>Datos del Cliente</h4>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Nombre y Apellidos</label>
+                <input type="text" name="cliente_nombre" class="form-control" required value="{{ venta.cliente_nombre if venta else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label>Cédula</label>
+                <input type="text" name="cliente_cedula" class="form-control" value="{{ venta.cliente_cedula if venta else '' }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label>Celular</label>
+                <input type="text" name="cliente_celular" class="form-control" value="{{ venta.cliente_celular if venta else '' }}">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label>Destino de Envío</label>
+                <input type="text" name="destino" class="form-control" value="{{ venta.destino if venta else '' }}">
+            </div>
+        </div>
+
+        <div class="shipping-box mb-4">
+            <label class="text-primary mb-2"><i class="fas fa-truck me-2"></i>Cálculo de Encomienda / Envío</label>
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label class="small text-muted">Cobrado al Cliente ($)</label>
+                    <input type="number" step="0.01" name="valor_envio" id="envio_cobrado" class="form-control" value="{{ venta.valor_envio if venta else '' }}" oninput="calcularEncomienda()">
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="small text-muted">Pago Real Encomienda ($)</label>
+                    <input type="number" step="0.01" name="costo_encomienda_real" id="envio_real" class="form-control" value="{{ venta.costo_envio_real if venta else '' }}" oninput="calcularEncomienda()">
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="small text-muted">Ganancia / Pérdida</label>
+                    <input type="text" id="envio_ganancia" class="form-control shipping-result" readonly value="$0.00">
+                </div>
+            </div>
+        </div>
+
+        <h4 class="section-title"><i class="fas fa-dove me-2"></i>Datos del Ave</h4>
+
+        <div class="mb-4">
+            <label class="mb-2">Seleccione la etapa:</label>
+            <select name="categoria_venta" id="categoria_venta" class="form-select form-select-lg" onchange="cambiarBloque()">
+                <option value="" disabled {% if not venta %}selected{% endif %}>-- Seleccione --</option>
+                <option value="Nacidos">Nacidos</option>
+                <option value="Desarrollo">En Desarrollo</option>
+                <option value="Grandes/Reproductores">Grandes/Reproductores</option>
+            </select>
+        </div>
+
+        <div id="bloque_nacidos" class="hidden">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="text-success"><i class="fas fa-search me-1"></i>Seleccionar Lote de Inventario (Nacidos)</label>
+                    <select name="lote_nac" id="select_lote_nac" class="form-select border-success" onchange="rellenarDatosAve('nac')">
+                        <option value="">-- Buscar Lote Disponible --</option>
+                        </select>
+                    <div id="stock_info_nac" class="stock-info text-end"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Fecha Nacimiento</label>
+                    <input type="date" name="fecha_nacimiento_nac" id="fecha_nac" class="form-control calc-edad" data-target="edad_display_nac" readonly>
+                </div>
+                <div class="col-md-4 mb-3"><label>Edad</label><div id="edad_display_nac" class="edad-display">--</div></div>
+                <div class="col-md-4 mb-3">
+                    <label>Raza</label>
+                    <input type="text" name="tipo_ave_nac" id="tipo_ave_nac" class="form-control" readonly>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label>Variedad / Descripción</label>
+                    <input type="text" name="descripcion_nac" id="descripcion_nac" class="form-control" readonly>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Cantidad A Vender</label>
+                    <input type="number" id="cant_nacidos" name="cantidad_nac" class="form-control fw-bold" min="1" value="{{ venta.cantidad_total if venta and venta.categoria_venta == 'Nacidos' else '' }}" oninput="calcularDinero()">
+                    <small class="text-muted d-block text-end">Max: <span id="max_nac">--</span></small>
+                </div>
+            </div>
+        </div>
+
+        <div id="bloque_sexado" class="hidden">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="text-primary"><i class="fas fa-search me-1"></i>Seleccionar Lote de Inventario</label>
+                    <select name="lote_sex" id="select_lote_sex" class="form-select border-primary" onchange="rellenarDatosAve('sex')">
+                        <option value="">-- Buscar Lote Disponible --</option>
+                        </select>
+                    <div id="stock_info_sex" class="stock-info text-end"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Fecha Nacimiento</label>
+                    <input type="date" name="fecha_nacimiento_sex" id="fecha_sex" class="form-control calc-edad" data-target="edad_display_sex" readonly>
+                </div>
+                <div class="col-md-4 mb-3"><label>Edad</label><div id="edad_display_sex" class="edad-display">--</div></div>
+                <div class="col-md-4 mb-3">
+                    <label>Raza</label>
+                    <input type="text" name="tipo_ave_sex" id="tipo_ave_sex" class="form-control" readonly>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label>Variedad / Descripción</label>
+                    <input type="text" name="descripcion_sex" id="descripcion_sex" class="form-control" readonly>
+                </div>
+            </div>
+
+            <div class="bg-light p-3 rounded mb-3 border">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Machos</label>
+                        <input type="number" id="cant_machos" name="cant_machos" class="form-control calc-sexo" min="0" value="{{ venta.cant_machos if venta else '' }}">
+                        <small class="text-muted d-block text-end">Max: <span id="max_machos">--</span></small>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Hembras</label>
+                        <input type="number" id="cant_hembras" name="cant_hembras" class="form-control calc-sexo" min="0" value="{{ venta.cant_hembras if venta else '' }}">
+                        <small class="text-muted d-block text-end">Max: <span id="max_hembras">--</span></small>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Total Aves</label>
+                        <input type="number" id="cant_sexado_total" class="form-control" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="section-title"><i class="fas fa-file-invoice-dollar me-2"></i>Pago</h4>
+
+        <div id="div_precio_simple" class="hidden mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Precio Unitario ($)</label>
+                    <input type="number" step="0.01" id="precio_unitario" name="precio_unitario" class="form-control" value="{{ venta.precio_unitario if venta else '' }}" oninput="calcularDinero()">
+                </div>
+                <div class="col-md-6">
+                    <label>Forma Pago</label>
+                    <select name="forma_pago" id="pago_simple" class="form-select">
+                        <option value="Efectivo" {% if venta and venta.forma_pago == 'Efectivo' %}selected{% endif %}>Efectivo</option>
+                        <option value="Transferencia" {% if venta and venta.forma_pago == 'Transferencia' %}selected{% endif %}>Transferencia</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 mt-3 hidden" id="div_comprobante_simple">
+                    <label>Número de Comprobante</label>
+                    <input type="text"
+                           name="numero_comprobante"
+                           id="numero_comprobante"
+                           class="form-control"
+                           value="{{ venta.numero_comprobante if venta else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div id="div_precio_sexado" class="hidden mb-3">
+            <div class="row border p-3 rounded bg-light">
+                <div class="col-md-4 mb-2">
+                    <label class="text-primary">Precio Macho ($)</label>
+                    <input type="number" step="0.01" id="precio_macho" name="precio_macho" class="form-control" value="{{ venta.precio_macho if venta else '' }}" oninput="calcularDinero()">
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="text-danger">Precio Hembra ($)</label>
+                    <input type="number" step="0.01" id="precio_hembra" name="precio_hembra" class="form-control" value="{{ venta.precio_hembra if venta else '' }}" oninput="calcularDinero()">
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label>Forma Pago</label>
+                    <select id="pago_sexado" class="form-select" onchange="document.getElementById('pago_simple').value = this.value">
+                        <option value="Efectivo" {% if venta and venta.forma_pago == 'Efectivo' %}selected{% endif %}>Efectivo</option>
+                        <option value="Transferencia" {% if venta and venta.forma_pago == 'Transferencia' %}selected{% endif %}>Transferencia</option>
+                    </select>
+                </div>
+            </div>
+
+        <div class="row">
+            <div class="col-md-12 mt-3 hidden" id="div_comprobante_sexado">
+                <label>Número de Comprobante</label>
+                <input type="text"
+                       id="numero_comprobante_sex"
+                       class="form-control"
+                       value="{{ venta.numero_comprobante if venta else '' }}"
+                       oninput="sincronizarComprobante(this.value)">
+            </div>
+        </div>
+
+    </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between border-bottom pb-2"><span>Subtotal Aves:</span><strong id="display_subtotal">$0.00</strong></div>
+                <div class="d-flex justify-content-between border-bottom pb-2"><span>Envío Cobrado:</span><strong id="display_envio">$0.00</strong></div>
+            </div>
+            <div class="col-md-6">
+                <div class="total-box">
+                    <div class="total-label">Total a Pagar</div>
+                    <div class="total-amount" id="display_gran_total">$0.00</div>
+                    <hr>
+                    <div class="neto-label">Ingreso Neto</div>
+                    <div class="neto-amount" id="display_ingreso_neto">$0.00</div>
+                    <input type="hidden" name="total_pagar" id="input_total_pagar">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-save">{% if venta %}Actualizar Venta{% else %}Registrar Venta{% endif %}</button>
+    </form>
+</div>
+
+<script>
+    // Recibimos la lista de aves disponibles como objeto JSON
+    const inventoryData = {{ inventario_json | tojson }};
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // ----------------------------------------
+        // CALCULAR EDAD VISUAL
+        // ----------------------------------------
+        const inputsFecha = document.querySelectorAll('.calc-edad');
+        inputsFecha.forEach(input => {
+            const calcular = () => {
+                const targetId = input.getAttribute('data-target');
+                const display = document.getElementById(targetId);
+                const fechaStr = input.value;
+
+                if (!fechaStr) {
+                    display.innerText = "--";
+                    return;
+                }
+                const fechaNac = new Date(fechaStr);
+                const hoy = new Date();
+                fechaNac.setMinutes(fechaNac.getMinutes() + fechaNac.getTimezoneOffset());
+                hoy.setHours(0,0,0,0);
+                const diffTime = hoy - fechaNac;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) display.innerText = "Fecha futura";
+                else if (diffDays === 0) display.innerText = "Nacido hoy";
+                else if (diffDays < 30) display.innerText = diffDays + " días";
+                else {
+                    const meses = Math.floor(diffDays / 30);
+                    const dias = diffDays % 30;
+                    display.innerText = `${meses} meses (${dias} d)`;
+                }
+            };
+            input.addEventListener('change', calcular);
+            // Ejecutar al inicio por si es edición
+            calcular();
+        });
+
+        // PRE-CARGA DATOS SI ES EDICION
+        {% if venta %}
+            document.getElementById('categoria_venta').value = "{{ venta.categoria_venta }}";
+            cambiarBloque();
+            // Esperar un momento para que se cargue el DOM
+            setTimeout(() => {
+                const lote = "{{ venta.lote_origen }}";
+                const cat = "{{ venta.categoria_venta }}";
+                if(cat === 'Nacidos'){
+                    document.getElementById('select_lote_nac').value = lote;
+                    rellenarDatosAve('nac');
+                } else {
+                    document.getElementById('select_lote_sex').value = lote;
+                    rellenarDatosAve('sex');
+                }
+                calcularDinero();
+                calcularEncomienda();
+            }, 200);
+        {% endif %}
+    });
+
+    function cambiarBloque() {
+        const cat = document.getElementById('categoria_venta').value;
+        const bNac = document.getElementById('bloque_nacidos');
+        const bSex = document.getElementById('bloque_sexado');
+        const pSim = document.getElementById('div_precio_simple');
+        const pSex = document.getElementById('div_precio_sexado');
+
+        // Reset display
+        bNac.classList.add('hidden'); bSex.classList.add('hidden');
+        pSim.classList.add('hidden'); pSex.classList.add('hidden');
+
+        // Reset required
+        document.querySelectorAll('input, select').forEach(i => i.required = false);
+        document.querySelector('[name="cliente_nombre"]').required = true;
+        document.querySelector('[name="fecha_venta"]').required = true;
+
+        // Mapeo de Categoría Front -> Etapa BD
+        let etapaFiltro = "";
+        if (cat === 'Nacidos') etapaFiltro = 'nacidos';
+        else if (cat === 'Desarrollo') etapaFiltro = 'desarrollo';
+        else if (cat === 'Grandes/Reproductores') etapaFiltro = 'engorde';
+
+        if (cat === 'Nacidos') {
+            bNac.classList.remove('hidden'); pSim.classList.remove('hidden');
+            document.getElementById('select_lote_nac').required = true;
+            document.getElementById('cant_nacidos').required = true;
+            cargarLotesEnSelect(etapaFiltro, 'select_lote_nac');
+        } else if (cat) {
+            bSex.classList.remove('hidden'); pSex.classList.remove('hidden');
+            document.getElementById('select_lote_sex').required = true;
+            cargarLotesEnSelect(etapaFiltro, 'select_lote_sex');
+        }
+        calcularDinero();
+    }
+
+    // FUNCIÓN PARA LLENAR EL DROPDOWN DE LOTES SEGÚN CATEGORÍA
+    function cargarLotesEnSelect(etapa, selectId) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">-- Buscar Lote Disponible --</option>';
+
+        // Filtramos el JSON de inventario
+        const filtrados = inventoryData.filter(item => item.etapa === etapa);
+
+        if(filtrados.length === 0) {
+            let opt = document.createElement('option');
+            opt.text = "No hay stock disponible en esta categoría";
+            select.appendChild(opt);
+        } else {
+            filtrados.forEach(ave => {
+                let opt = document.createElement('option');
+                opt.value = ave.lote;
+                // Texto informativo en el dropdown
+                opt.text = `${ave.lote} - ${ave.tipo} (${ave.desc}) - Stock: ${ave.total}`;
+                select.appendChild(opt);
+            });
+        }
+    }
+
+    // FUNCIÓN PARA AUTO-RELLENAR DATOS CUANDO SE ELIGE UN LOTE
+    function rellenarDatosAve(suffix) {
+        const selectId = (suffix === 'nac') ? 'select_lote_nac' : 'select_lote_sex';
+        const loteSeleccionado = document.getElementById(selectId).value;
+
+        // Buscar el objeto en el JSON
+        const ave = inventoryData.find(i => i.lote === loteSeleccionado);
+
+        if(ave) {
+            // Llenar campos comunes
+            if(suffix === 'nac') {
+                document.getElementById('tipo_ave_nac').value = ave.tipo;
+                document.getElementById('descripcion_nac').value = ave.desc;
+                document.getElementById('fecha_nac').value = ave.fecha;
+
+                // Setear Stocks y Validaciones
+                const inputCant = document.getElementById('cant_nacidos');
+                inputCant.max = ave.total; // No dejar vender más del total
+                document.getElementById('max_nac').innerText = ave.total;
+
+                // Mensaje visual
+                const info = document.getElementById('stock_info_nac');
+                info.innerHTML = `<span class="text-stock-ok">Stock Total Disponible: ${ave.total}</span>`;
+
+                // Disparar cambio de fecha para calcular edad visualmente
+                document.getElementById('fecha_nac').dispatchEvent(new Event('change'));
+
+            } else {
+                document.getElementById('tipo_ave_sex').value = ave.tipo;
+                document.getElementById('descripcion_sex').value = ave.desc;
+                document.getElementById('fecha_sex').value = ave.fecha;
+
+                // Setear Stocks Machos/Hembras
+                const inMacho = document.getElementById('cant_machos');
+                const inHembra = document.getElementById('cant_hembras');
+
+                inMacho.max = ave.machos;
+                inHembra.max = ave.hembras;
+
+                document.getElementById('max_machos').innerText = ave.machos;
+                document.getElementById('max_hembras').innerText = ave.hembras;
+
+                const info = document.getElementById('stock_info_sex');
+                info.innerHTML = `<span class="text-primary me-3">Machos Disp: ${ave.machos}</span> <span class="text-danger">Hembras Disp: ${ave.hembras}</span>`;
+
+                document.getElementById('fecha_sex').dispatchEvent(new Event('change'));
+            }
+        }
+        calcularDinero();
+    }
+
+    function calcularEncomienda() {
+        const c = parseFloat(document.getElementById('envio_cobrado').value)||0;
+        const r = parseFloat(document.getElementById('envio_real').value)||0;
+        const diff = c - r;
+        const disp = document.getElementById('envio_ganancia');
+        disp.value = '$' + diff.toFixed(2);
+        disp.style.color = diff < 0 ? 'red' : 'green';
+        calcularDinero();
+    }
+
+    document.querySelectorAll('.calc-sexo').forEach(i => i.addEventListener('input', () => {
+        const m = parseInt(document.getElementById('cant_machos').value)||0;
+        const h = parseInt(document.getElementById('cant_hembras').value)||0;
+        document.getElementById('cant_sexado_total').value = m + h;
+        calcularDinero();
+    }));
+
+    function calcularDinero() {
+        const cat = document.getElementById('categoria_venta').value;
+        let sub = 0;
+
+        if (cat === 'Nacidos') {
+            const c = parseInt(document.getElementById('cant_nacidos').value)||0;
+            const p = parseFloat(document.getElementById('precio_unitario').value)||0;
+            sub = c * p;
+        } else {
+            const cm = parseInt(document.getElementById('cant_machos').value)||0;
+            const ch = parseInt(document.getElementById('cant_hembras').value)||0;
+            const pm = parseFloat(document.getElementById('precio_macho').value)||0;
+            const ph = parseFloat(document.getElementById('precio_hembra').value)||0;
+            sub = (cm * pm) + (ch * ph);
+        }
+
+        const env = parseFloat(document.getElementById('envio_cobrado').value)||0;
+        const real = parseFloat(document.getElementById('envio_real').value)||0;
+        const total = sub + env;
+        const neto = sub + (env - real);
+
+        document.getElementById('display_subtotal').innerText = '$' + sub.toFixed(2);
+        document.getElementById('display_envio').innerText = '$' + env.toFixed(2);
+        document.getElementById('display_gran_total').innerText = '$' + total.toFixed(2);
+        document.getElementById('display_ingreso_neto').innerText = '$' + neto.toFixed(2);
+        document.getElementById('input_total_pagar').value = total.toFixed(2);
+    }
+</script>
+<script>
+function mostrarComprobante(valor) {
+    const divSimple = document.getElementById("div_comprobante_simple");
+    const divSexado = document.getElementById("div_comprobante_sexado");
+
+    if (valor === "Transferencia") {
+        if (divSimple) divSimple.classList.remove("hidden");
+        if (divSexado) divSexado.classList.remove("hidden");
+    } else {
+        if (divSimple) divSimple.classList.add("hidden");
+        if (divSexado) divSexado.classList.add("hidden");
+    }
+}
+
+document.getElementById("pago_simple")?.addEventListener("change", function() {
+    mostrarComprobante(this.value);
+});
+
+document.getElementById("pago_sexado")?.addEventListener("change", function() {
+    document.getElementById("pago_simple").value = this.value;
+    mostrarComprobante(this.value);
+});
+
+function sincronizarComprobante(valor) {
+    const inputPrincipal = document.getElementById("numero_comprobante");
+    if (inputPrincipal) inputPrincipal.value = valor;
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const pagoActual = document.getElementById("pago_simple")?.value;
+    mostrarComprobante(pagoActual);
+});
+</script>
+</body>
+</html>

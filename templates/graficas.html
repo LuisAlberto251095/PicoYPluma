@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas Premium | Pico y Pluma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Poppins', sans-serif; color: #2c3e50; }
+        .dashboard-wrapper { max-width: 1200px; margin: 30px auto; padding: 0 15px; }
+
+        /* Controles de Filtro */
+        .filter-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px; border-left: 5px solid #3498db; }
+
+        /* Tarjetas KPI Premium */
+        .kpi-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); height: 100%; transition: transform 0.2s; border: 1px solid #edf2f7; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .kpi-title { font-size: 0.85rem; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; margin: 5px 0; }
+        .kpi-icon { font-size: 2rem; opacity: 0.2; position: absolute; right: 20px; top: 20px; }
+
+        /* Colores Específicos */
+        .text-success-custom { color: #10b981; }
+        .text-danger-custom { color: #ef4444; }
+        .text-primary-custom { color: #3b82f6; }
+        .text-warning-custom { color: #f59e0b; }
+        .text-purple-custom { color: #8b5cf6; }
+
+        /* Gráficas */
+        .chart-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid #edf2f7; position: relative; height: 350px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .chart-title { font-size: 1.1rem; font-weight: 600; color: #34495e; margin: 0; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0"><i class="fas fa-chart-line me-2 text-primary"></i> Analítica del Negocio</h2>
+            <p class="text-muted m-0">Rendimiento, porcentajes y flujo de capital</p>
+        </div>
+        <a href="{{ url_for('menu_principal') }}" class="btn btn-dark"><i class="fas fa-arrow-left me-2"></i> Volver al ERP</a>
+    </div>
+
+    <div class="filter-card">
+        <form method="GET" action="{{ url_for('graficas') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-muted small">Filtrar por Año</label>
+                <select name="anio" class="form-select">
+                    <option value="Todos" {% if filtro_anio == 'Todos' %}selected{% endif %}>Global (Histórico)</option>
+                    {% for anio in anios_lista %}
+                        <option value="{{ anio }}" {% if filtro_anio == anio %}selected{% endif %}>{{ anio }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-muted small">Filtrar por Mes</label>
+                <select name="mes" class="form-select">
+                    <option value="Todos" {% if filtro_mes == 'Todos' %}selected{% endif %}>Todos los meses</option>
+                    <option value="1" {% if filtro_mes == '1' %}selected{% endif %}>Enero</option>
+                    <option value="2" {% if filtro_mes == '2' %}selected{% endif %}>Febrero</option>
+                    <option value="3" {% if filtro_mes == '3' %}selected{% endif %}>Marzo</option>
+                    <option value="4" {% if filtro_mes == '4' %}selected{% endif %}>Abril</option>
+                    <option value="5" {% if filtro_mes == '5' %}selected{% endif %}>Mayo</option>
+                    <option value="6" {% if filtro_mes == '6' %}selected{% endif %}>Junio</option>
+                    <option value="7" {% if filtro_mes == '7' %}selected{% endif %}>Julio</option>
+                    <option value="8" {% if filtro_mes == '8' %}selected{% endif %}>Agosto</option>
+                    <option value="9" {% if filtro_mes == '9' %}selected{% endif %}>Septiembre</option>
+                    <option value="10" {% if filtro_mes == '10' %}selected{% endif %}>Octubre</option>
+                    <option value="11" {% if filtro_mes == '11' %}selected{% endif %}>Noviembre</option>
+                    <option value="12" {% if filtro_mes == '12' %}selected{% endif %}>Diciembre</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="fas fa-search me-2"></i> Actualizar Gráficas</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card" style="border-bottom: 4px solid #3b82f6;">
+                <i class="fas fa-wallet kpi-icon text-primary-custom"></i>
+                <div class="kpi-title">Utilidad Neta</div>
+                <div class="kpi-value {{ 'text-success-custom' if rentabilidad >= 0 else 'text-danger-custom' }}">
+                    ${{ "%.2f"|format(rentabilidad) }}
+                </div>
+                <small class="text-muted fw-bold">Ventas - Gastos Totales</small>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="kpi-card" style="border-bottom: 4px solid #f59e0b;">
+                <i class="fas fa-percentage kpi-icon text-warning-custom"></i>
+                <div class="kpi-title">Retorno Inversión (ROI)</div>
+                <div class="kpi-value text-warning-custom">{{ "%.1f"|format(roi) }}%</div>
+                <small class="text-muted fw-bold">Rendimiento del Capital</small>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="kpi-card" style="border-bottom: 4px solid #ef4444;">
+                <i class="fas fa-skull kpi-icon text-danger-custom"></i>
+                <div class="kpi-title">Tasa de Mortalidad</div>
+                <div class="kpi-value {{ 'text-danger-custom' if tasa_mortalidad > 5 else 'text-success-custom' }}">
+                    {{ "%.1f"|format(tasa_mortalidad) }}%
+                </div>
+                <small class="text-muted fw-bold">Aves Muertas vs Compradas</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="kpi-card" style="background: linear-gradient(to right, #d1fae5, #ffffff);">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white p-3 rounded-circle shadow-sm me-3"><i class="fas fa-arrow-trend-up text-success fs-3"></i></div>
+                    <div>
+                        <div class="text-muted fw-bold text-uppercase" style="font-size: 0.8rem;">Pico Máximo de Ingresos</div>
+                        <div class="fs-4 fw-bold text-success">{{ mejor_periodo }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="kpi-card" style="background: linear-gradient(to right, #fee2e2, #ffffff);">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white p-3 rounded-circle shadow-sm me-3"><i class="fas fa-arrow-trend-down text-danger fs-3"></i></div>
+                    <div>
+                        <div class="text-muted fw-bold text-uppercase" style="font-size: 0.8rem;">Punto de Caída Comercial</div>
+                        <div class="fs-4 fw-bold text-danger">{{ peor_periodo }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title"><i class="fas fa-chart-area text-success me-2"></i> Curva de Ingresos Netos</h3>
+                </div>
+                <div style="height: 250px;">
+                    <canvas id="ingresosChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title"><i class="fas fa-chart-bar text-warning me-2"></i> Distribución de Egresos</h3>
+                </div>
+                <div style="height: 250px;">
+                    <canvas id="egresosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+
+    // 1. CURVA DE INGRESOS (Área Suave)
+    const etiquetasIngresos = JSON.parse('{{ etiquetas_ingresos | safe }}');
+    const datosIngresos = JSON.parse('{{ totales_ingresos | safe }}');
+    const ctxIngresos = document.getElementById('ingresosChart').getContext('2d');
+
+    let gradientVerde = ctxIngresos.createLinearGradient(0, 0, 0, 300);
+    gradientVerde.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+    gradientVerde.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+    new Chart(ctxIngresos, {
+        type: 'line',
+        data: {
+            labels: etiquetasIngresos.length > 0 ? etiquetasIngresos : ['Sin datos'],
+            datasets: [{
+                label: 'Ingreso Diario/Mensual ($)',
+                data: datosIngresos.length > 0 ? datosIngresos : [0],
+                borderColor: '#10b981',
+                backgroundColor: gradientVerde,
+                borderWidth: 3,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#10b981',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.4 // Efecto Curva
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. BARRAS DE EGRESOS
+    const ctxEgresos = document.getElementById('egresosChart').getContext('2d');
+    new Chart(ctxEgresos, {
+        type: 'bar',
+        data: {
+            labels: ['Compra Aves', 'Insumos', 'Mortalidad'],
+            datasets: [{
+                label: 'Gastos ($)',
+                data: [{{ compra_aves }}, {{ compra_insumos }}, {{ perdidas_muertes }}],
+                backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                borderRadius: 6,
+                borderWidth: 0,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

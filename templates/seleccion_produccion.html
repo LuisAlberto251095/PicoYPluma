@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Producción Interna | Pico y Pluma</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; }
+        body { background-color: var(--bg); font-family: 'Segoe UI', sans-serif; }
+        .premium-container { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-top: 50px; overflow: hidden; }
+        .nav-main { background: var(--primary); padding: 15px; color: white; text-align: center; font-weight: 600; font-size: 1.2rem; }
+        .nav-sub { background: #ecf0f1; padding: 10px; }
+        .nav-link { color: #7f8c8d; font-weight: 500; transition: 0.3s; }
+        .nav-link:hover { color: var(--accent); }
+        .content-body { padding: 40px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container premium-container">
+        <div class="nav-main">GESTIÓN DE PRODUCCIÓN INTERNA</div>
+        <div class="nav-sub">
+            <ul class="nav nav-pills justify-content-center">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('lista_produccion_interna', etapa='nacidos') }}"><i class="fas fa-egg me-2"></i>Nacidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('lista_produccion_interna', etapa='desarrollo') }}"><i class="fas fa-feather me-2"></i>En Desarrollo</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('lista_produccion_interna', etapa='engorde') }}"><i class="fas fa-kiwi-bird me-2"></i>Grandes / Reproductores</a></li>
+            </ul>
+        </div>
+        <div class="content-body">
+            <h3>Módulo de Nacimientos e Inventario Propio</h3>
+            <p class="text-muted">Seleccione una etapa para gestionar las aves que nacen y crecen en su granja.</p>
+            <a href="{{ url_for('menu_principal') }}" class="btn btn-outline-secondary mt-3"><i class="fas fa-arrow-left me-2"></i>Volver al Menú</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Bajas y Mortalidad | Pico y Pluma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --danger: #c0392b;
+            --bg: #f4f7f6;
+        }
+        body { background-color: var(--bg); font-family: 'Poppins', sans-serif; color: #333; }
+
+        .premium-wrapper {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .premium-header {
+            background: linear-gradient(135deg, var(--primary), #34495e);
+            padding: 25px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-responsive { overflow-x: auto; }
+
+        .table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            color: #7f8c8d;
+            border-bottom: 2px solid #ecf0f1;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .table tbody tr { transition: all 0.2s ease; }
+        .table tbody tr:hover { background-color: #fcfcfc; transform: scale(1.005); box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 10; position: relative; }
+
+        .info-cell { min-width: 180px; }
+        .money-cell { min-width: 110px; text-align: right; }
+        .sub-text { font-size: 0.8rem; color: #7f8c8d; display: block; }
+        .fw-500 { font-weight: 500; }
+
+        .enlace-panel {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+            margin-left: 20px;
+        }
+        .enlace-panel:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4">
+    <div class="premium-wrapper">
+        <div class="premium-header">
+            <div>
+                <h2 class="m-0 fw-bold"><i class="fas fa-skull-crossbones me-3 text-danger"></i>Registro de Bajas / Mortalidad</h2>
+                <p class="m-0 opacity-75 small">Control de pérdidas y descuento de inventario</p>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('registrar_baja') }}" class="btn btn-danger fw-bold"><i class="fas fa-plus me-2"></i>Registrar Baja</a>
+
+                <a href="{{ url_for('menu_principal') }}" class="enlace-panel">
+                    <i class="fas fa-home me-1" style="font-size: 0.8rem;"></i> Panel
+                </a>
+            </div>
+        </div>
+
+        <div class="p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">#</th>
+                            <th>Fecha de Baja</th>
+                            <th>Lote Afectado / Especie</th>
+                            <th>Etapa de Vida</th>
+                            <th>Causa de Mortalidad</th>
+                            <th class="text-center">Cantidad (Bajas)</th>
+                            <th class="text-end">Pérdida Estimada ($)</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set acumulador = namespace(perdida_total=0) %}
+
+                        {% for baja in bajas %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted">{{ loop.index }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ baja.fecha_baja.strftime('%Y-%m-%d') }}</div>
+                            </td>
+
+                            <td class="info-cell">
+                                <div class="fw-bold text-dark">{{ baja.tipo_ave }}</div>
+                                <div class="sub-text text-muted">Lote: {{ baja.lote_origen }}</div>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-secondary">{{ baja.etapa_ave }}</span>
+                            </td>
+
+                            <td>
+                                <div class="fw-500 text-danger">{{ baja.causa }}</div>
+                                <div class="sub-text">{{ baja.observaciones }}</div>
+                            </td>
+
+                            <td class="text-center">
+                                <div class="fw-bold fs-5 text-danger">-{{ baja.cantidad_total }}</div>
+                                {% if baja.etapa_ave != 'Nacidos' %}
+                                    <div class="sub-text">
+                                        M: {{ baja.cant_machos }} | H: {{ baja.cant_hembras }}
+                                    </div>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end money-cell text-muted">
+                                {% set acumulador.perdida_total = acumulador.perdida_total + baja.perdida_economica %}
+                                ${{ "%.2f"|format(baja.perdida_economica) }}
+                            </td>
+
+                            <td class="text-end pe-4">
+                                <a href="{{ url_for('registrar_baja', id=baja.id) }}" class="btn btn-sm btn-outline-primary" title="Editar registro y ajustar inventario">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="8" class="text-center py-5 text-muted">No hay registros de mortalidad. ¡Excelente!</td></tr>
+                        {% endfor %}
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-end text-uppercase pe-3">Total Pérdida Económica:</td>
+                            <td class="text-end money-cell" style="font-size: 1.1rem; color: #c0392b;">
+                                ${{ "%.2f"|format(acumulador.perdida_total) }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

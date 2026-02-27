@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Registrado - Pico y Pluma</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* RESET Y BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: #f4f7f6; color: #333; }
+
+        /* --- ENCABEZADO PROFESIONAL (NAVBAR) --- */
+        .navbar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .brand-logo { display: flex; align-items: center; gap: 15px; font-size: 1.5rem; font-weight: 600; text-decoration: none; color: white; }
+        .brand-logo i { color: #2ecc71; }
+        .btn-volver {
+            background: #34495e; color: white; padding: 8px 15px; border-radius: 6px;
+            text-decoration: none; font-size: 0.9rem; transition: 0.3s; margin-right: 15px;
+        }
+        .btn-volver:hover { background: #2ecc71; }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .dashboard-container { max-width: 98%; margin: 30px auto; padding: 0 10px; }
+        .section-title { margin-bottom: 25px; font-size: 1.5rem; color: #2c3e50; border-left: 5px solid #7f8c8d; padding-left: 15px; }
+
+        /* --- TABLAS --- */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.8rem; }
+        th { background-color: #f8f9fa; color: #2c3e50; font-weight: 600; text-transform: uppercase; }
+        tr:hover { background-color: #f9f9f9; }
+
+        /* --- ETIQUETAS Y BOTONES --- */
+        .badge-rol { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; color: white; }
+        .rol-propietario { background-color: #2ecc71; }
+        .rol-colaborador { background-color: #3498db; }
+
+        .btn-eliminar {
+            background-color: #e74c3c; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 0.75rem; text-decoration: none;
+        }
+        .btn-disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        .fecha-stack { font-size: 0.75rem; color: #555; line-height: 1.2; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{{ url_for('menu_principal') }}" class="brand-logo">
+            <i class="fas fa-feather-alt"></i>
+            <span>Pico y Pluma</span>
+        </a>
+        <a href="{{ url_for('menu_principal') }}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </nav>
+
+    <div class="dashboard-container">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div style="padding:15px; margin-bottom:20px; border-radius:8px; background:{% if category=='success' %}#d4edda{% else %}#f8d7da{% endif %}; color:{% if category=='success' %}#155724{% else %}#721c24{% endif %};">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="section-title">
+            <i class="fas fa-users"></i> Listado Completo de Personal
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre Completo</th>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Email</th>
+                        <th>Granja</th>
+                        <th>País</th>
+                        <th>Provincia</th>
+                        <th>Ciudad</th>
+                        <th>Registro</th> <th>Dirección</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u.cedula }}</td>
+                        <td>{{ u.nombres }} {{ u.apellidos or '' }}</td>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td>
+                            <span class="badge-rol {% if u.role == 'Propietario' %}rol-propietario{% else %}rol-colaborador{% endif %}">
+                                {{ u.role }}
+                            </span>
+                        </td>
+                        <td>{{ u.email or '---' }}</td>
+                        <td>{{ u.nombre_granja or '---' }}</td>
+                        <td>{{ u.pais or '---' }}</td>
+                        <td>{{ u.provincia or '---' }}</td>
+                        <td>{{ u.ciudad or '---' }}</td>
+
+                        <td>
+                            <div class="fecha-stack">
+                                <div><i class="far fa-calendar-alt"></i> {{ u.fecha_registro.strftime('%d/%m/%Y') if u.fecha_registro else '---' }}</div>
+                                <div><i class="far fa-clock"></i> {{ u.fecha_registro.strftime('%H:%M') if u.fecha_registro else '' }}</div>
+                            </div>
+                        </td>
+
+                        <td>{{ u.direccion or '---' }}</td>
+
+                        <td>
+                            {% if rol_actual == 'Propietario' %}
+                                {% if u.id != session['user_id'] %}
+                                    <a href="{{ url_for('eliminar_colaborador', id=u.id) }}" class="btn-eliminar" onclick="return confirm('¿Eliminar a este usuario?');">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                {% else %}
+                                    <span class="badge-rol" style="background:#95a5a6">Tú</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

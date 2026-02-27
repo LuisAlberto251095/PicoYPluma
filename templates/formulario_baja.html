@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if baja %}Editar Baja{% else %}Registrar Baja{% endif %} | Pico y Pluma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --danger: #c0392b;
+            --bg: #f4f7f6;
+        }
+        body { background-color: var(--bg); font-family: 'Poppins', sans-serif; color: #333; }
+
+        .premium-wrapper {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 40px auto;
+            max-width: 800px;
+        }
+
+        .premium-header {
+            background: linear-gradient(135deg, var(--danger), #e74c3c);
+            padding: 25px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-label { font-weight: 500; color: var(--primary); font-size: 0.9rem; }
+        .form-control, .form-select { border-radius: 8px; padding: 10px 15px; border: 1px solid #ced4da; }
+        .form-control:focus, .form-select:focus { border-color: var(--danger); box-shadow: 0 0 0 0.2rem rgba(192, 57, 43, 0.25); }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .enlace-panel {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+            margin-left: 20px;
+        }
+        .enlace-panel:hover { color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container px-4">
+    <div class="premium-wrapper">
+        <div class="premium-header">
+            <div>
+                <h3 class="m-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>{% if baja %}Editar Registro de Baja{% else %}Registrar Nueva Baja{% endif %}</h3>
+                <p class="m-0 opacity-75 small">Las aves se descontarán (o devolverán) automáticamente del inventario</p>
+            </div>
+            <div>
+                <a href="{{ url_for('muerte_aves') }}" class="enlace-panel" style="margin-left: 0; margin-right: 15px;">
+                    <i class="fas fa-arrow-left me-1" style="font-size: 0.8rem;"></i> Volver
+                </a>
+                <a href="{{ url_for('menu_principal') }}" class="enlace-panel">
+                    <i class="fas fa-home me-1" style="font-size: 0.8rem;"></i> Panel
+                </a>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <form method="POST" action="{{ url_for('registrar_baja', id=baja.id) if baja else url_for('registrar_baja') }}">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha de Baja</label>
+                        <input type="date" class="form-control" name="fecha_baja" value="{{ baja.fecha_baja.strftime('%Y-%m-%d') if baja else hoy }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Lote Afectado</label>
+                        <select class="form-select" name="lote_origen" id="lote_origen" required {% if baja %}style="pointer-events: none; background-color: #e9ecef;"{% endif %}>
+                            <option value="">Seleccione un lote del inventario...</option>
+                        </select>
+                        {% if baja %}<small class="text-muted">No se puede cambiar el lote al editar.</small>{% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Tipo de Ave</label>
+                        <input type="text" class="form-control bg-light" name="tipo_ave" id="tipo_ave" readonly>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Etapa de Vida</label>
+                        <input type="text" class="form-control bg-light" name="etapa_ave" id="etapa_ave" readonly>
+                    </div>
+                </div>
+
+                <div class="section-title">Detalles de la Mortalidad</div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Causa de Mortalidad</label>
+                        <select class="form-select" name="causa" required>
+                            <option value="">Seleccione una causa...</option>
+                            <option value="Enfermedad" {% if baja and baja.causa == 'Enfermedad' %}selected{% endif %}>Enfermedad</option>
+                            <option value="Clima / Ahogo" {% if baja and baja.causa == 'Clima / Ahogo' %}selected{% endif %}>Factores Climáticos / Ahogo</option>
+                            <option value="Depredador" {% if baja and baja.causa == 'Depredador' %}selected{% endif %}>Ataque de Depredador</option>
+                            <option value="Muerte Natural" {% if baja and baja.causa == 'Muerte Natural' %}selected{% endif %}>Muerte Natural / Desconocida</option>
+                            <option value="Descarte" {% if baja and baja.causa == 'Descarte' %}selected{% endif %}>Descarte Técnico</option>
+                            <option value="Otro" {% if baja and baja.causa == 'Otro' %}selected{% endif %}>Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Pérdida Económica Estimada ($)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" class="form-control fw-bold text-danger bg-light" name="perdida_economica" id="perdida_economica" readonly required>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">Calculado automáticamente con costos de inventario</small>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1" id="seccion_cantidades"></div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label class="form-label">Observaciones Adicionales</label>
+                        <textarea class="form-control" name="observaciones" rows="2" placeholder="Síntomas observados, medidas tomadas...">{{ baja.observaciones if baja else '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top text-end">
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">
+                        <i class="fas fa-{% if baja %}save{% else %}skull-crossbones{% endif %} me-2"></i> {% if baja %}Guardar Cambios{% else %}Confirmar Baja{% endif %}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inventario = {{ inventario_json | tojson | safe }};
+    const selectLote = document.getElementById('lote_origen');
+    const inputTipo = document.getElementById('tipo_ave');
+    const inputEtapa = document.getElementById('etapa_ave');
+    const contenedorCantidades = document.getElementById('seccion_cantidades');
+    const inputPerdida = document.getElementById('perdida_economica');
+
+    let aveSeleccionada = null;
+
+    // Poblar select
+    inventario.forEach(ave => {
+        const option = document.createElement('option');
+        option.value = ave.lote;
+        option.textContent = `${ave.lote} - ${ave.tipo} (Disp: ${ave.total})`;
+        selectLote.appendChild(option);
+    });
+
+    selectLote.addEventListener('change', function() {
+        const lote = this.value;
+        aveSeleccionada = inventario.find(a => a.lote === lote);
+
+        if (aveSeleccionada) {
+            inputTipo.value = aveSeleccionada.tipo;
+            let textoEtapa = (aveSeleccionada.etapa === "nacidos") ? "Nacidos" :
+                             (aveSeleccionada.etapa === "desarrollo") ? "Desarrollo" : "Reproducción";
+            inputEtapa.value = textoEtapa;
+
+            let htmlCantidades = '';
+            if (aveSeleccionada.etapa.toLowerCase() === 'nacidos' || aveSeleccionada.etapa.toLowerCase() === 'huevos') {
+                htmlCantidades = `
+                    <div class="col-md-12">
+                        <label class="form-label text-danger fw-bold">Cantidad Total de Bajas</label>
+                        <input type="number" class="form-control" name="cantidad_total" id="cantidad_total" min="0" max="${aveSeleccionada.total}" required>
+                        <small class="text-muted">Límite permitido: ${aveSeleccionada.total} | Costo u: $${(aveSeleccionada.costo_u || 0).toFixed(2)}</small>
+                    </div>
+                `;
+            } else {
+                htmlCantidades = `
+                    <div class="col-md-4">
+                        <label class="form-label text-primary fw-bold">Bajas Machos</label>
+                        <input type="number" class="form-control" name="cant_machos" id="cant_machos" min="0" max="${aveSeleccionada.machos}" value="0">
+                        <small class="text-muted">Límite: ${aveSeleccionada.machos} | Costo: $${(aveSeleccionada.precio_m || 0).toFixed(2)}</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-danger fw-bold">Bajas Hembras</label>
+                        <input type="number" class="form-control" name="cant_hembras" id="cant_hembras" min="0" max="${aveSeleccionada.hembras}" value="0">
+                        <small class="text-muted">Límite: ${aveSeleccionada.hembras} | Costo: $${(aveSeleccionada.precio_h || 0).toFixed(2)}</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cantidad Total</label>
+                        <input type="number" class="form-control bg-light fw-bold" name="cantidad_total" id="cantidad_total" readonly required>
+                    </div>
+                `;
+            }
+            contenedorCantidades.innerHTML = htmlCantidades;
+            asignarEventosCalculo();
+            inputPerdida.value = '0.00';
+        }
+    });
+
+    function asignarEventosCalculo() {
+        const inputTotal = document.getElementById('cantidad_total');
+        const inputM = document.getElementById('cant_machos');
+        const inputH = document.getElementById('cant_hembras');
+
+        const calcular = () => {
+            let totalPerdida = 0;
+            if (inputM && inputH) {
+                let bajasM = parseInt(inputM.value) || 0;
+                let bajasH = parseInt(inputH.value) || 0;
+                inputTotal.value = bajasM + bajasH;
+                totalPerdida = (bajasM * (aveSeleccionada.precio_m || 0)) + (bajasH * (aveSeleccionada.precio_h || 0));
+            } else if (inputTotal) {
+                totalPerdida = (parseInt(inputTotal.value) || 0) * (aveSeleccionada.costo_u || 0);
+            }
+            inputPerdida.value = totalPerdida.toFixed(2);
+        };
+
+        if (inputTotal && !inputTotal.readOnly) inputTotal.addEventListener('input', calcular);
+        if (inputM) inputM.addEventListener('input', calcular);
+        if (inputH) inputH.addEventListener('input', calcular);
+    }
+
+    // SI ESTAMOS EN MODO EDICIÓN, AUTOCOMPLETAR LOS CAMPOS
+    {% if baja %}
+        window.addEventListener('DOMContentLoaded', (event) => {
+            // Sumar temporalmente las aves al inventario JS para que el "Límite/Max" sea correcto
+            let item = inventario.find(a => a.lote === "{{ baja.lote_origen }}");
+            if(item) {
+                item.total += {{ baja.cantidad_total }};
+                item.machos += {{ baja.cant_machos }};
+                item.hembras += {{ baja.cant_hembras }};
+            }
+
+            // Seleccionar el lote
+            selectLote.value = "{{ baja.lote_origen }}";
+            selectLote.dispatchEvent(new Event('change'));
+
+            // Esperar que el DOM inserte los inputs y colocar los valores guardados
+            setTimeout(() => {
+                const inputTotal = document.getElementById('cantidad_total');
+                const inputM = document.getElementById('cant_machos');
+                const inputH = document.getElementById('cant_hembras');
+
+                if(inputM) inputM.value = "{{ baja.cant_machos }}";
+                if(inputH) inputH.value = "{{ baja.cant_hembras }}";
+                if(inputTotal && inputTotal.readOnly === false) inputTotal.value = "{{ baja.cantidad_total }}";
+
+                // Disparar evento para calcular costo
+                if(inputTotal) inputTotal.dispatchEvent(new Event('input'));
+                if(inputM) inputM.dispatchEvent(new Event('input'));
+            }, 50);
+        });
+    {% endif %}
+</script>
+</body>
+</html>

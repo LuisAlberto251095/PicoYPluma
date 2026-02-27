@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if ave %}Editar{% else %}Registro{% endif %} Grandes/Reproductores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Poppins', sans-serif; }
+        .container { max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; color: #555; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #3498db; outline: none; }
+        .hidden { display: none; }
+        input[readonly] { background-color: #e9ecef; color: #555; cursor: not-allowed; font-weight: 600; }
+
+        #edad_display {
+            background-color: #fdf2e9 !important;
+            color: #d35400 !important;
+            font-weight: bold;
+            text-align: center;
+            border: 2px solid #ddd;
+            caret-color: transparent;
+            cursor: text;
+        }
+        #edad_display:focus {
+            outline: none !important;
+            border-color: #ddd !important;
+            box-shadow: none !important;
+        }
+        #edad_display::selection {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-submit { background-color: #e67e22; color: white; border: none; padding: 15px; width: 100%; font-size: 1.1rem; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; transition: 0.3s; }
+        .btn-submit:hover { background-color: #d35400; }
+        .info-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .info-col { flex: 1; min-width: 200px; }
+        .flash-msg { padding: 15px; background: #e74c3c; color: white; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .sexo-container { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .sexo-title { font-size: 0.9rem; color: #555; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+
+        .fecha-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .fecha-header label {
+            margin-bottom: 0;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .fecha-header input {
+            width: auto;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            color: #555;
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-msg">{{ messages[0] }}</div>
+        {% endif %}
+    {% endwith %}
+
+    <h1>Registro de Aves: <span style="color: #3498db;">Grandes/Reproductores</span>
+    {% if origen == 'Produccion' %}<small style="font-size:0.5em; color:gray;">(Interna)</small>{% endif %}
+    </h1>
+
+    <div class="fecha-header">
+        <label for="fecha_registro">Fecha de Registro:</label>
+        <input type="date" id="fecha_registro" name="fecha_registro" value="{{ ave.fecha_registro if ave else '' }}">
+    </div>
+
+    <form action="{{ url_for('formulario_final_ave', etapa='engorde') }}" method="POST">
+        {% if ave %}
+        <input type="hidden" name="ave_id_hidden" value="{{ ave.id }}">
+        {% endif %}
+
+        <input type="hidden" name="origen" value="{{ origen }}">
+
+        <div class="info-row">
+            <div class="info-col">
+                <label>Fecha de Nacimiento</label>
+                <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required onchange="calcularEdad()"
+                       value="{{ ave.fecha_nacimiento if ave else '' }}">
+            </div>
+            <div class="info-col">
+                <label>Edad Actual</label>
+                <input type="text" id="edad_display" readonly value="Seleccione fecha">
+            </div>
+        </div>
+
+        <div class="info-row" style="margin-top: 20px;">
+            <div class="info-col">
+                <label>Tipo de Ave</label>
+                <select id="tipo_ave" name="tipo_ave" onchange="actualizarDescripcion()" required>
+                    <option value="" disabled selected>-- Seleccione --</option>
+                </select>
+            </div>
+            <div class="info-col">
+                <label>Descripción / Color</label>
+                <select id="descripcion" name="descripcion" required>
+                    <option value="" disabled selected>-- Primero elija ave --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="info-row" style="margin-top: 20px;">
+            <div class="info-col">
+                <label>ID Lote</label>
+                <input type="text" id="lote_codigo" name="lote_codigo" placeholder="Generando..." readonly required value="{{ ave.lote_codigo if ave else nuevo_codigo }}">
+            </div>
+
+            <div class="info-col">
+                <div class="sexo-container">
+                    <div class="sexo-title">Distribución por Sexo</div>
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem; margin-bottom: 2px;">Machos</label>
+                            <input type="number" id="cant_machos" name="cant_machos" min="0" placeholder="0" oninput="calcularTotalCantidad()" required value="{{ ave.cant_machos if ave else '' }}">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.8rem; margin-bottom: 2px;">Hembras</label>
+                            <input type="number" id="cant_hembras" name="cant_hembras" min="0" placeholder="0" oninput="calcularTotalCantidad()" required value="{{ ave.cant_hembras if ave else '' }}">
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; text-align: center; font-size: 0.85rem; color: #666;">
+                        Total: <strong id="display_total_sexo" style="color: #2c3e50;">0</strong> aves
+                    </div>
+                    <input type="hidden" id="input_cantidad" value="{{ ave.cantidad if ave else '0' }}">
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #555;">Datos Financieros</h3>
+
+        <div class="form-group">
+            <label>Forma de Pago</label>
+            <select id="forma_pago" name="forma_pago" onchange="actualizarPago()" required>
+                {% if origen == 'Produccion' %}
+                    <option value="Interno" selected>Producción Interna (N/A)</option>
+                {% else %}
+                    <option value="Efectivo" {% if ave and ave.forma_pago == 'Efectivo' %}selected{% endif %}>Efectivo</option>
+                    <option value="Deposito" {% if ave and ave.forma_pago == 'Deposito' %}selected{% endif %}>Depósito / Transferencia</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="info-row">
+            <div class="info-col">
+                <label>Precio Unitario Macho ($)</label>
+                <input type="number" step="0.01" id="precio_macho" name="precio_macho" placeholder="0.00"
+                       oninput="calcularTotalDinero()" value="{{ ave.precio_macho if ave else '' }}">
+            </div>
+            <div class="info-col">
+                <label>Precio Unitario Hembra ($)</label>
+                <input type="number" step="0.01" id="precio_hembra" name="precio_hembra" placeholder="0.00"
+                       oninput="calcularTotalDinero()" value="{{ ave.precio_hembra if ave else '' }}">
+            </div>
+            <div class="info-col">
+                <label>Valor Total ($)</label>
+                <input type="number" step="0.01" id="valor_total" name="valor_total" placeholder="0.00" readonly
+                       value="{{ ave.monto_pago if ave else '' }}">
+            </div>
+        </div>
+
+        <div class="form-group hidden" id="div_comprobante" style="margin-top: 15px;">
+            <label>Número de Comprobante</label>
+            <input type="text" name="numero_comprobante" value="{{ ave.numero_comprobante if ave else '' }}">
+        </div>
+
+        <button type="submit" class="btn-submit">Guardar Grandes/Reproductores</button>
+        <a href="{{ url_for('ver_etapa', etapa='engorde', origen=origen) }}" style="display:block; text-align:center; margin-top:15px; text-decoration:none; color:#777;">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const registroInput = document.getElementById("fecha_registro");
+        if (!registroInput.value) {
+            const hoy = new Date();
+            const year = hoy.getFullYear();
+            const month = String(hoy.getMonth() + 1).padStart(2, '0');
+            const day = String(hoy.getDate()).padStart(2, '0');
+            registroInput.value = `${year}-${month}-${day}`;
+        }
+    });
+
+    const catalogoAves = {
+        "Brahmas": ["Porcelana", "BSO", "Perdiz", "Isabela", "Salmon", "Black", "Light", "Dark","Splash"],
+        "Sedosas": ["Japonesa", "Americana", "Showgirl", "Blanca", "Negra"],
+        "Guineas": ["Pecho blanco", "Lavanda", "Azul", "Blanco"],
+        "Pavos Reales": ["Azul", "Ala Negra", "Blanco", "Arlequín"],
+        "Faisanes": ["Dorado", "Lady", "Gigi", "Venerado"],
+        "Gansos": ["Africano", "Tolousse"],
+        "Patos": ["Mudo", "Corredor Indio", "Pekin"],
+        "Pollos": ["Cobb 500", "Ross 308"],
+        "Ponedoras": ["Lohmann Brown", "Isa Brown"],
+        "Criollas": ["Varios"]
+    };
+
+    const selectAve = document.getElementById("tipo_ave");
+    const avesOrdenadas = Object.keys(catalogoAves).sort();
+
+    avesOrdenadas.forEach(ave => {
+        let option = document.createElement("option");
+        option.value = ave;
+        option.text = ave;
+        selectAve.appendChild(option);
+    });
+
+    function actualizarDescripcion() {
+        const tipo = document.getElementById("tipo_ave").value;
+        const selectDesc = document.getElementById("descripcion");
+        selectDesc.innerHTML = '<option value="" disabled selected>-- Seleccione --</option>';
+        if (catalogoAves[tipo]) {
+            const coloresOrdenados = catalogoAves[tipo].sort();
+            coloresOrdenados.forEach(desc => {
+                let opt = document.createElement("option");
+                opt.value = desc;
+                opt.text = desc;
+                selectDesc.appendChild(opt);
+            });
+        }
+    }
+
+    if ("{{ ave.id if ave else '' }}") {
+        selectAve.value = "{{ ave.tipo_ave if ave else '' }}";
+        actualizarDescripcion();
+        document.getElementById("descripcion").value = "{{ ave.descripcion if ave else '' }}";
+        calcularEdad();
+        calcularTotalCantidad();
+        actualizarPago();
+    }
+
+    function calcularEdad() {
+    const fechaInput = document.getElementById("fecha_nacimiento").value;
+    const display = document.getElementById("edad_display");
+
+    if (fechaInput) {
+        const nacimiento = new Date(fechaInput);
+        const hoy = new Date();
+        const dias = Math.floor((hoy - nacimiento) / (1000 * 60 * 60 * 24));
+
+        const meses = Math.floor(dias / 30);
+        const diasRest = dias % 30;
+        display.value = meses + " meses y " + diasRest + " días";
+    } else {
+        display.value = "Seleccione fecha";
+    }
+}
+
+    function calcularTotalCantidad() {
+        const machos = parseInt(document.getElementById("cant_machos").value) || 0;
+        const hembras = parseInt(document.getElementById("cant_hembras").value) || 0;
+        const total = machos + hembras;
+        document.getElementById("display_total_sexo").innerText = total;
+        document.getElementById("input_cantidad").value = total;
+        calcularTotalDinero();
+    }
+
+    function calcularTotalDinero() {
+        const machos = parseInt(document.getElementById("cant_machos").value) || 0;
+        const hembras = parseInt(document.getElementById("cant_hembras").value) || 0;
+        const precioMacho = parseFloat(document.getElementById("precio_macho").value) || 0;
+        const precioHembra = parseFloat(document.getElementById("precio_hembra").value) || 0;
+        const total = (machos * precioMacho) + (hembras * precioHembra);
+        document.getElementById("valor_total").value = total.toFixed(2);
+    }
+
+    function actualizarPago() {
+        const pago = document.getElementById("forma_pago").value;
+        const divComp = document.getElementById("div_comprobante");
+        if (pago === "Deposito") divComp.classList.remove("hidden");
+        else divComp.classList.add("hidden");
+    }
+</script>
+
+</body>
+</html>

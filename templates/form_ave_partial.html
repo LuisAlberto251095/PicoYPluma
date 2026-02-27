@@ -1,0 +1,60 @@
+<label>1. Código de Lote o ID:</label>
+<input type="text" name="lote_codigo" required placeholder="Ej: LOTE-001">
+
+<div style="display: flex; gap: 15px;">
+    <div style="flex: 1;">
+        <label>2. Especie:</label>
+        <select name="especie">
+            <option value="Brahmas">Brahmas</option>
+            <option value="Silkies">Silkies</option>
+            <option value="Gallinas de Guinea">Gallinas de Guinea</option>
+            <option value="Pavos">Pavos</option>
+            <option value="Patos">Patos</option>
+            <option value="Otro">Otro</option>
+        </select>
+    </div>
+    <div style="flex: 1;">
+        <label>3. Sexo:</label>
+        <select name="sexo" class="selectSexo" onchange="toggleCantidadInputs(this)">
+            <option value="Macho">Macho</option>
+            <option value="Hembra">Hembra</option>
+            <option value="Mixto">Mixto (Lote)</option>
+        </select>
+    </div>
+</div>
+
+<label>4. Raza y Color:</label>
+<input type="text" name="raza_color" required placeholder="Ej: Perdiz / Dorado">
+
+<div class="divSimple">
+    <label>5. Cantidad Total:</label>
+    <input type="number" name="cantidad_simple" class="inputSimple" value="1" min="1">
+</div>
+
+<div class="divMixto hidden" style="background: #e2e6ea; padding: 10px; border-radius: 5px; border: 1px dashed #ccc;">
+    <label style="color: #2980b9;">Desglose del Lote:</label>
+    <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label style="font-size: 0.8em;">Machos</label>
+            <input type="number" name="input_machos" placeholder="0" min="0">
+        </div>
+        <div style="flex: 1;">
+            <label style="font-size: 0.8em;">Hembras</label>
+            <input type="number" name="input_hembras" placeholder="0" min="0">
+        </div>
+    </div>
+</div>
+
+<div style="display: flex; gap: 15px; margin-top: 10px;">
+    <div style="flex: 1;">
+        <label>6. Fecha Nacimiento:</label>
+        <input type="date" name="fecha_nacimiento" required>
+    </div>
+    <div style="flex: 1;">
+        <label>7. Costo Unitario ($):</label>
+        <input type="number" step="0.01" name="costo_unitario" value="0.00">
+    </div>
+</div>
+
+<label>8. Observaciones:</label>
+<textarea name="observaciones" rows="2" placeholder="Detalles extra..."></textarea>

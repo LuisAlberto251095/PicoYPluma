@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Clientes - Pico y Pluma</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stily.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --bg: #f4f7f6;
+        }
+
+        /* AQUÍ ESTÁ LA MAGIA: Forzamos a que NO se centre la pantalla como en el login */
+        body {
+            background-color: var(--bg) !important;
+            background-image: none !important;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            display: block !important; /* Esto evita que inicie desde el centro de la ventana */
+            margin-top: 20px !important;
+        }
+
+        .premium-wrapper {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 0; /* Sin espacios extra arriba */
+            margin-bottom: 30px;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Efecto para el enlace Panel limpio (mismo tamaño que ventas) */
+        .enlace-panel {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+            margin-left: 15px; /* Separación a la derecha del buscador */
+        }
+
+        .enlace-panel:hover {
+            color: white;
+        }
+
+        /* Modal (Exactamente tu diseño original) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; }
+        .modal-content { background: white; width: 400px; margin: 100px auto; padding: 20px; border-radius: 10px; font-family: sans-serif;}
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-add { background: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid px-4">
+        <div class="premium-wrapper">
+
+            <div class="header">
+                <h2><i class="fas fa-users"></i> Gestión de Clientes</h2>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" id="buscarCliente" placeholder="Buscar cliente..." style="padding:10px 15px; border-radius:5px; border:none; width:250px; outline: none;">
+
+                    <a href="{{ url_for('menu_principal') }}" class="enlace-panel">
+                        <i class="fas fa-home me-1" style="font-size: 0.8rem;"></i> Panel
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark" style="--bs-table-bg: #2c3e50;">
+                        <tr>
+                            <th style="width:50px; text-align:center;">#</th>
+                            <th>Nombre</th>
+                            <th>Cédula/RUC</th>
+                            <th>Teléfono</th>
+                            <th>Dirección</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in clientes %}
+                        <tr class="fila-cliente">
+                            <td style="text-align:center; color: #777777;">{{ loop.index }}</td>
+                            <td style="color: #777777;">{{ c.nombre }}</td>
+                            <td style="color: #777777;">{{ c.cedula_ruc }}</td>
+                            <td style="color: #777777;">{{ c.telefono }}</td>
+                            <td style="color: #777777;">{{ c.direccion }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" style="text-align:center;" class="py-4">No hay clientes registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="modalCliente" class="modal">
+        <div class="modal-content">
+            <span onclick="document.getElementById('modalCliente').style.display='none'" style="float:right; cursor:pointer; font-size:20px;">&times;</span>
+            <h3>Agregar Cliente</h3>
+            <form method="POST">
+                <label>Nombre Completo:</label>
+                <input type="text" name="nombre" required>
+                <label>Cédula o RUC:</label>
+                <input type="text" name="cedula">
+                <label>Teléfono:</label>
+                <input type="text" name="telefono">
+                <label>Dirección:</label>
+                <input type="text" name="direccion">
+                <label>Observaciones:</label>
+                <textarea name="observaciones"></textarea>
+                <button type="submit" class="btn-add" style="width:100%;">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+<script>
+document.getElementById("buscarCliente").addEventListener("keyup", function() {
+    let filtro = this.value.toLowerCase();
+    let filas = document.querySelectorAll(".fila-cliente");
+
+    filas.forEach(function(fila) {
+        let texto = fila.innerText.toLowerCase();
+        fila.style.display = texto.includes(filtro) ? "" : "none";
+    });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
