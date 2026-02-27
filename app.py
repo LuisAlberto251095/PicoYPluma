@@ -9,9 +9,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from flask_migrate import Migrate
 
 app = Flask(__name__)
-
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 # ==========================================
